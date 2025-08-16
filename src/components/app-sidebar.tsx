@@ -35,14 +35,9 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
+      name: "Alleato",
+      logo: "/logos/Alleato_Icon_Light.png",
       plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
     },
   ],
   navMain: [
