@@ -1,18 +1,4 @@
-import { streamObject } from 'ai';
-import { z } from 'zod';
-
-export const citationSchema = z.object({
-  content: z.string(),
-  citations: z.array(
-    z.object({
-      number: z.string(),
-      title: z.string(),
-      url: z.string(),
-      description: z.string().optional(),
-      quote: z.string().optional(),
-    }),
-  ),
-});
+import { apiClient } from '@/lib/api-client';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -20,19 +6,15 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { prompt } = await req.json();
 
-  const result = streamObject({
-    model: 'openai/gpt-4o',
-    schema: citationSchema,
-    prompt: `Generate a well-researched paragraph about ${prompt} with proper citations. 
-    
-    Include:
-    - A comprehensive paragraph with inline citations marked as [1], [2], etc.
-    - 2-3 citations with realistic source information
-    - Each citation should have a title, URL, and optional description/quote
-    - Make the content informative and the sources credible
-    
-    Format citations as numbered references within the text.`,
+  // Forward the request to the backend API
+  const response = await apiClient.citation.generate(prompt);
+  
+  // Return the streaming response from the backend
+  return new Response(response.body, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
   });
-
-  return result.toTextStreamResponse();
 }

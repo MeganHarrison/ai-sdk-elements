@@ -1,0 +1,53 @@
+
+> ai-chatbot@0.1.0 dev /Users/meganharrison/Documents/github/ai-elements-chatbot
+> next dev --turbopack
+
+ ⚠ Warning: Found multiple lockfiles. Selecting /Users/meganharrison/Documents/package-lock.json.
+   Consider removing the lockfiles at:
+   * /Users/meganharrison/Documents/github/ai-elements-chatbot/pnpm-lock.yaml
+
+   ▲ Next.js 15.4.6 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.95:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 589ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1909ms
+ ⨯ ./src/app/page.tsx:26:10
+Ecmascript file had an error
+[0m [90m 24 |[39m [36mimport[39m { useState } [36mfrom[39m [32m'react'[39m[33m;[39m
+ [90m 25 |[39m [36mimport[39m { useChat } [36mfrom[39m [32m'@ai-sdk/react'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 26 |[39m [36mimport[39m { [33mResponse[39m } [36mfrom[39m [32m'@/components/ai-elements/response'[39m[33m;[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 27 |[39m [36mimport[39m { [33mGlobeIcon[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
+ [90m 28 |[39m [36mimport[39m {
+ [90m 29 |[39m   [33mSource[39m[33m,[39m[0m
+
+the name `Response` is defined multiple times
+
+Import traces:
+  Client Component Browser:
+    ./src/app/page.tsx [Client Component Browser]
+    ./src/app/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/page.tsx [Client Component SSR]
+    ./src/app/page.tsx [Server Component]
+
+
+ ✓ Compiled /_error in 456ms
+ GET / 500 in 2456ms
+ ✓ Compiled in 75ms
+ ✓ Compiled / in 11ms
+ GET / 200 in 525ms
+ GET / 200 in 370ms
+ ✓ Compiled /favicon.ico in 143ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 394ms
+ ✓ Compiled /api/chat in 125ms
+ POST /api/chat 200 in 274ms
+ POST /api/chat 200 in 291ms
+ POST /api/chat 200 in 136ms
+ ✓ Compiled in 62ms
+[?25h

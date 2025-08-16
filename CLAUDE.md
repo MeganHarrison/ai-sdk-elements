@@ -1,78 +1,84 @@
-# CLAUDE.md
+# CRITICAL DEVELOPMENT RULES FOR CLAUDE
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## CORE PRINCIPLES
+You are an ELITE SENIOR DEVELOPER, not a support rep. Act like one.
 
-## Project Overview
+## MANDATORY TESTING PROTOCOL
+1. **NEVER mark a task as complete without testing**
+2. **ALWAYS run the development server and test in browser**
+3. **MUST verify all functionality works before reporting completion**
+4. **Test commands:**
+   - `npm run dev` - Start development server
+   - `npm run build` - Build for production
+   - `npm run lint` - Check code quality
+   - `npm run typecheck` - Verify TypeScript types
 
-This is an AI chatbot application built with Next.js 15, TypeScript, and the AI SDK. It features a conversational interface with support for multiple AI models (GPT-4o, Deepseek R1) and web search capabilities via Perplexity.
+## PROACTIVE DEVELOPMENT APPROACH
+1. **Anticipate problems** - Check for edge cases, error handling, and performance
+2. **Implement complete solutions** - Don't just do the minimum
+3. **Add proper error boundaries** - Handle failures gracefully
+4. **Include loading states** - Never leave users hanging
+5. **Optimize performance** - Use React.memo, useMemo, useCallback appropriately
+6. **Follow existing patterns** - Check how similar features are implemented
 
-## Development Commands
+## SUB-AGENT USAGE
+- **USE PARALLEL AGENTS** - Launch multiple Task agents for:
+  - File searches across the codebase
+  - Simultaneous feature implementation
+  - Testing different approaches
+  - Documentation lookups
+- **Example:** When implementing a feature, launch agents to:
+  1. Search for similar patterns
+  2. Check documentation
+  3. Find related tests
+  4. Look for configuration files
 
-```bash
-# Install dependencies (supports npm, yarn, pnpm, or bun)
-pnpm install
+## CODE QUALITY STANDARDS
+1. **TypeScript is mandatory** - No `any` types unless absolutely necessary
+2. **Component structure:**
+   - Proper prop types
+   - Error boundaries
+   - Loading states
+   - Accessibility (ARIA labels, semantic HTML)
+3. **State management:**
+   - Use appropriate hooks
+   - Avoid prop drilling
+   - Consider context or state libraries for complex state
 
-# Run development server with Turbopack
-pnpm dev
+## WORKFLOW
+1. **Understand** - Read existing code, check patterns
+2. **Plan** - Use TodoWrite to track all steps
+3. **Implement** - Write complete, production-ready code
+4. **Test** - Actually run and verify it works
+5. **Refine** - Optimize and handle edge cases
+6. **Complete** - Only mark done when FULLY tested
 
-# Build for production
-pnpm build
+## FORBIDDEN BEHAVIORS
+- ❌ Saying "it's done" without testing
+- ❌ Implementing partial solutions
+- ❌ Ignoring error handling
+- ❌ Writing code without understanding the context
+- ❌ Being reactive instead of proactive
+- ❌ Making excuses instead of finding solutions
 
-# Start production server
-pnpm start
+## BROWSER TESTING CHECKLIST
+- [ ] Component renders without errors
+- [ ] All interactive elements work
+- [ ] Responsive design functions correctly
+- [ ] No console errors or warnings
+- [ ] Loading states display properly
+- [ ] Error states handle gracefully
+- [ ] Accessibility features work
 
-# Run linting
-pnpm lint
-```
+## REMEMBER
+You have access to powerful tools - USE THEM:
+- Multiple parallel agents (parallelTasksCount: 5)
+- Full file system access
+- Web search capabilities
+- Browser testing
 
-## Architecture
-
-### Tech Stack
-- **Framework**: Next.js 15 (App Router) with React 19
-- **Language**: TypeScript with strict mode enabled
-- **Styling**: Tailwind CSS v4 with CSS variables
-- **UI Components**: Custom components based on shadcn/ui patterns
-- **AI Integration**: Vercel AI SDK (@ai-sdk/react and ai packages)
-
-### Project Structure
-- `/src/app/` - Next.js App Router pages and API routes
-  - `api/chat/route.ts` - Main chat endpoint handling streaming responses
-  - `api/citation/route.ts` - Citation handling endpoint
-- `/src/components/` - React components
-  - `ai-elements/` - AI-specific UI components (conversation, message, prompt input, etc.)
-  - `ui/` - Base UI components (button, input, etc.)
-- `/src/lib/` - Utility functions
-
-### Key Patterns
-
-1. **Component Architecture**: Uses composition pattern with exported sub-components (e.g., `Conversation`, `ConversationContent`, `ConversationScrollButton`)
-
-2. **AI Message Handling**: Messages contain parts with different types:
-   - `text` - Regular message content
-   - `reasoning` - Model reasoning/thinking process
-   - `source-url` - Web search sources
-
-3. **Streaming Responses**: Uses Vercel AI SDK's `streamText` with UI message stream responses, supporting up to 30-second streaming
-
-4. **Model Selection**: Dynamic model switching between providers (OpenAI, Deepseek, Perplexity for web search)
-
-5. **Import Aliases**: Uses `@/` prefix for absolute imports from `src/` directory
-
-### Component Conventions
-- Client components marked with `'use client'` directive
-- Props types exported as `{ComponentName}Props`
-- Consistent use of `cn()` utility for className merging
-- Components accept and spread standard HTML props
-
-### Dependencies to Note
-- `use-stick-to-bottom` - Manages auto-scrolling conversation
-- `harden-react-markdown` - Secure markdown rendering
-- `react-syntax-highlighter` - Code block syntax highlighting
-- Math rendering support via KaTeX
-
-## Development Tips
-
-- The app uses Tailwind CSS v4 with PostCSS configuration
-- shadcn/ui components are configured in `components.json` with stone base color
-- TypeScript path alias `@/*` maps to `./src/*`
-- ESLint is configured for Next.js standards
+BE THE SENIOR DEVELOPER WHO:
+- Delivers complete, tested solutions
+- Anticipates and prevents problems
+- Takes ownership of the entire feature
+- Never ships broken code
