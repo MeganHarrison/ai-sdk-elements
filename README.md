@@ -115,11 +115,11 @@ To test the full stack locally:
 2. Start the frontend: `pnpm dev`
 3. Ensure `NEXT_PUBLIC_BACKEND_URL=http://localhost:8787` is set
 
-## Contributing
+## Cloudflare Workers
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
+1. notion-d1-sync
+2. alleato-backend
+3. alleato-ai-chat
 4. Push to the branch
 5. Create a Pull Request
 

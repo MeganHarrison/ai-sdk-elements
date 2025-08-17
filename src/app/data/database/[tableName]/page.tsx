@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { apiClient } from "@/lib/api-client"
+import { useTableData, useTableSchema } from "@/hooks/useTableData"
+import { useDebounce } from "@/hooks/useDebounce"
+import { VirtualTable } from "@/components/ui/virtual-table"
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -32,137 +33,115 @@ import {
   Search,
   X,
   Database,
-  Table as TableIcon,
   AlertCircle,
+  Zap,
 } from "lucide-react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 interface TableColumn {
   cid: number
   name: string
   type: string
   notnull: number
-  dflt_value: any
+  dflt_value: unknown
   pk: number
 }
 
-interface TableDataResponse {
-  success: boolean
-  data: any[]
-  pagination: {
-    page: number
-    limit: number
-    totalCount: number
-    totalPages: number
-  }
-  error?: string
-}
-
-export default function TableViewerPage() {
+export default function OptimizedTableViewerPage() {
   const params = useParams()
-  const router = useRouter()
   const tableName = params.tableName as string
   
-  const [columns, setColumns] = useState<TableColumn[]>([])
-  const [data, setData] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // UI state
+  const [useVirtualization, setUseVirtualization] = useState(false)
   
   // Pagination state
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(50)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
   
   // Sort state
   const [sortBy, setSortBy] = useState<string>("")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   
   // Search state
-  const [search, setSearch] = useState("")
   const [searchInput, setSearchInput] = useState("")
+  const debouncedSearch = useDebounce(searchInput, 300)
 
-  useEffect(() => {
-    loadTableSchema()
-  }, [tableName])
+  // Define specific columns for the meetings table
+  const meetingsColumns = [
+    'title', 'date_time', 'duration', 'project', 'category', 
+    'meeting_type', 'tags', 'client', 'follow_up_required', 
+    'vector_processed', 'insight_generated'
+  ]
 
-  useEffect(() => {
-    if (columns.length > 0) {
-      // Set default sort to first column (usually id)
-      setSortBy(columns[0].name)
-      loadTableData()
-    }
-  }, [columns, page, limit, sortBy, sortOrder, search])
-
-  const loadTableSchema = async () => {
-    try {
-      const response = await apiClient.database.getTableSchema(tableName)
-      if (response.success) {
-        setColumns(response.columns || [])
-      } else {
-        setError(response.error || "Failed to load table schema")
-      }
-    } catch (err) {
-      setError("Failed to load table schema")
-      console.error("Error loading schema:", err)
-    }
-  }
-
-  const loadTableData = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      
-      const response: TableDataResponse = await apiClient.database.getTableData(tableName, {
-        page,
-        limit,
-        sortBy,
-        sortOrder,
-        search,
+  // Fetch data using React Query
+  const { data: schemaData, isLoading: schemaLoading, error: schemaError } = useTableSchema(tableName)
+  const allColumns = schemaData?.columns || []
+  
+  // Filter columns based on table name
+  const columns = useMemo(() => {
+    if (tableName === 'meetings') {
+      return allColumns.filter(col => 
+        meetingsColumns.includes(col.name.toLowerCase())
+      ).sort((a, b) => {
+        const aIndex = meetingsColumns.indexOf(a.name.toLowerCase())
+        const bIndex = meetingsColumns.indexOf(b.name.toLowerCase())
+        return aIndex - bIndex
       })
-      
-      if (response.success) {
-        setData(response.data || [])
-        setTotalPages(response.pagination.totalPages)
-        setTotalCount(response.pagination.totalCount)
-      } else {
-        setError(response.error || "Failed to load table data")
-      }
-    } catch (err) {
-      setError("Failed to load table data")
-      console.error("Error loading data:", err)
-    } finally {
-      setLoading(false)
     }
-  }
+    return allColumns
+  }, [allColumns, tableName])
 
-  const handleSort = (columnName: string) => {
+  // Set default sort when columns load
+  useMemo(() => {
+    if (columns.length > 0 && !sortBy) {
+      setSortBy(columns[0].name)
+    }
+  }, [columns, sortBy])
+
+  const { 
+    data: tableData, 
+    isLoading: dataLoading, 
+    error: dataError,
+    isFetching,
+  } = useTableData(tableName, {
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    search: debouncedSearch,
+  })
+
+  const data = tableData?.data || []
+  const totalPages = tableData?.pagination?.totalPages || 1
+  const totalCount = tableData?.pagination?.totalCount || 0
+
+  // Memoized callbacks
+  const handleSort = useCallback((columnName: string) => {
     if (sortBy === columnName) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+      setSortOrder(prev => prev === "asc" ? "desc" : "asc")
     } else {
       setSortBy(columnName)
       setSortOrder("asc")
     }
-    setPage(1) // Reset to first page when sorting
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setSearch(searchInput)
-    setPage(1) // Reset to first page when searching
-  }
-
-  const clearSearch = () => {
-    setSearchInput("")
-    setSearch("")
     setPage(1)
-  }
+  }, [sortBy])
 
-  const formatCellValue = (value: any, column: TableColumn): React.ReactNode => {
+  const clearSearch = useCallback(() => {
+    setSearchInput("")
+    setPage(1)
+  }, [])
+
+  const formatCellValue = useCallback((value: unknown, column: TableColumn): React.ReactNode => {
     if (value === null || value === undefined) {
       return <span className="text-muted-foreground/50 italic">NULL</span>
     }
     
-    // Format based on column type
+    // Special formatting for duration column in meetings table
+    if (tableName === 'meetings' && column.name.toLowerCase() === 'duration' && typeof value === 'number') {
+      return <span className="font-mono tabular-nums">{Math.round(value)} mins</span>
+    }
+    
     const type = column.type.toUpperCase()
     
     if (type.includes('INT') || type.includes('REAL') || type.includes('NUMERIC')) {
@@ -196,7 +175,6 @@ export default function TableViewerPage() {
       )
     }
     
-    // For text, truncate long values
     const strValue = String(value)
     if (strValue.length > 100) {
       return (
@@ -212,105 +190,130 @@ export default function TableViewerPage() {
     }
     
     return strValue
-  }
+  }, [tableName])
 
-  const renderSortIcon = (columnName: string) => {
+  const renderSortIcon = useCallback((columnName: string) => {
     if (sortBy !== columnName) {
       return <ArrowUpDown className="ml-1 h-3 w-3 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors" />
     }
     return sortOrder === "asc" 
       ? <ArrowUp className="ml-1 h-3 w-3 text-primary" />
       : <ArrowDown className="ml-1 h-3 w-3 text-primary" />
-  }
+  }, [sortBy, sortOrder])
+
+  // Memoized virtual table columns
+  const virtualColumns = useMemo(() => 
+    columns.map(column => ({
+      key: column.name,
+      header: (
+        <div 
+          className="flex items-center justify-between cursor-pointer hover:text-foreground transition-colors"
+          onClick={() => handleSort(column.name)}
+        >
+          <span className="font-medium text-xs uppercase tracking-wider">
+            {column.name}
+          </span>
+          <div className="flex items-center gap-1">
+            {renderSortIcon(column.name)}
+          </div>
+        </div>
+      ),
+      cell: (row: Record<string, unknown>) => formatCellValue(row[column.name], column),
+      className: column.pk ? "font-medium" : undefined,
+    })),
+    [columns, handleSort, renderSortIcon, formatCellValue]
+  )
+
+  const error = schemaError || dataError
+  const loading = schemaLoading || dataLoading
 
   if (error && columns.length === 0) {
     return (
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => router.push("/data/database")}
-          className="w-fit"
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back to Tables
-        </Button>
-        <Alert variant="destructive">
+      <div className="@container/main flex flex-1 flex-col gap-4">
+        <div className="pb-6">
+          <h1 className="text-2xl font-bold tracking-tight uppercase">{tableName}</h1>
+          <p className="text-sm text-muted-foreground mt-2">Failed to load table</p>
+        </div>
+        <Alert variant="destructive" className="max-w-2xl">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>{error.message || "Failed to load table"}</AlertDescription>
         </Alert>
       </div>
     )
   }
 
   return (
-    <div className="@container/main flex flex-1 flex-col gap-4 p-4">
+    <div className="@container/main flex flex-1 flex-col gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2 border-b">
-        <div className="flex items-center gap-3">
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => router.push("/data/database")}
-            className="hover:bg-muted"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <TableIcon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">{tableName}</h1>
-              <p className="text-sm text-muted-foreground">
-                {totalCount.toLocaleString()} {totalCount === 1 ? 'record' : 'records'}
-              </p>
+      <div className="pb-6">
+        <div className="flex items-start justify-between gap-6">
+          {/* Column 1: Title and Status */}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight uppercase" style={{ color: '#DB802D' }}>{tableName}</h1>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isFetching ? "bg-orange-500 animate-pulse" : "bg-green-500"
+                )}></div>
+                <span>{isFetching ? "Updating..." : "Live"}</span>
+                <span className="text-muted-foreground/50">•</span>
+                <span>{totalCount.toLocaleString()} {totalCount === 1 ? 'record' : 'records'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="virtualization"
+                  checked={useVirtualization}
+                  onCheckedChange={setUseVirtualization}
+                  disabled={data.length === 0}
+                />
+                <Label htmlFor="virtualization" className="text-sm cursor-pointer text-muted-foreground">
+                  <Zap className="inline h-3 w-3 mr-1" />
+                  Virtual scrolling
+                </Label>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Live</span>
+          
+          {/* Column 2: Search */}
+          <div className="flex items-start gap-3 max-w-md w-full">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search across all text columns..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-10 pr-10 h-10 bg-muted/30 border-muted focus:border-muted-foreground focus:bg-background transition-colors focus:ring-0 focus:ring-offset-0"
+              />
+              {searchInput && (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={clearSearch}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search across all text columns..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-10 pr-10 h-10 bg-muted/30 border-muted focus:bg-background transition-colors"
-          />
-          {searchInput && (
-            <Button 
-              type="button" 
-              variant="ghost" 
-              size="icon"
-              onClick={clearSearch}
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-transparent"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <Button 
-          type="submit" 
-          disabled={loading}
-          className="shadow-sm"
-        >
-          <Search className="h-4 w-4 mr-2" />
-          Search
-        </Button>
-      </form>
-
       {/* Table */}
-      <div className="flex-1 bg-background rounded-lg border shadow-sm overflow-hidden">
-        <div className="overflow-auto">
-          <Table className="relative">
+      <div className="flex-1 bg-background overflow-hidden">
+        {useVirtualization && data.length > 0 ? (
+          <VirtualTable
+            data={data}
+            columns={virtualColumns}
+            className="h-[600px]"
+            estimateSize={50}
+            overscan={10}
+          />
+        ) : (
+          <div className="overflow-auto">
+            <Table className="relative">
               <TableHeader className="sticky top-0 z-10 bg-muted/50 backdrop-blur supports-[backdrop-filter]:bg-muted/40">
                 <TableRow className="border-b-2">
                   {columns.map((column) => (
@@ -324,9 +327,6 @@ export default function TableViewerPage() {
                           {column.name}
                         </span>
                         <div className="flex items-center gap-1">
-                          <span className="text-[10px] text-muted-foreground/50 font-mono">
-                            {column.type.toLowerCase()}
-                          </span>
                           {renderSortIcon(column.name)}
                         </div>
                       </div>
@@ -336,7 +336,6 @@ export default function TableViewerPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  // Loading skeletons
                   [...Array(10)].map((_, i) => (
                     <TableRow key={i}>
                       {columns.map((column) => (
@@ -355,9 +354,9 @@ export default function TableViewerPage() {
                       <div className="flex flex-col items-center gap-2">
                         <Database className="h-8 w-8 text-muted-foreground/50" />
                         <p className="text-sm font-medium text-muted-foreground">
-                          {search ? "No results found" : "No data available"}
+                          {debouncedSearch ? "No results found" : "No data available"}
                         </p>
-                        {search && (
+                        {debouncedSearch && (
                           <p className="text-xs text-muted-foreground/70">
                             Try adjusting your search terms
                           </p>
@@ -369,7 +368,9 @@ export default function TableViewerPage() {
                   data.map((row, i) => (
                     <TableRow 
                       key={i} 
-                      className="hover:bg-muted/30 transition-colors group/row"
+                      className={`hover:bg-muted/30 transition-colors group/row ${
+                        i % 2 === 0 ? 'bg-background' : 'bg-muted/10'
+                      }`}
                     >
                       {columns.map((column) => (
                         <TableCell 
@@ -385,7 +386,8 @@ export default function TableViewerPage() {
               </TableBody>
             </Table>
           </div>
-        </div>
+        )}
+      </div>
 
       {/* Pagination */}
       <div className="flex items-center justify-between pt-4 border-t">
@@ -484,4 +486,8 @@ export default function TableViewerPage() {
       </div>
     </div>
   )
+}
+
+function cn(...inputs: (string | undefined | null | false)[]) {
+  return inputs.filter(Boolean).join(' ')
 }

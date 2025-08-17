@@ -1,5 +1,5 @@
 name = "alleato-backend"
-main = "src/index-optimized.ts"
+main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
 [vars]
@@ -29,31 +29,6 @@ id = "31fe3137b6f543c89fd8dc84a511691e"
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
 id = "012891234b664e7c88bb57e48295ed25"
-
-# Analytics Engine (uncomment when ready to set up)
-# [[analytics_engine_datasets]]
-# binding = "ANALYTICS"
-# dataset = "alleato_analytics"
-
-# Scheduled Events for cache warming
-[triggers]
-crons = ["0 */6 * * *"] # Every 6 hours
-
-# Durable Objects (uncomment when implementing real-time features)
-# [[durable_objects.bindings]]
-# name = "QUERY_SESSION"
-# class_name = "QuerySession"
-# script_name = "alleato-backend"
-
-# Queues (uncomment when implementing background processing)
-# [[queues.producers]]
-# queue = "cache-warming-queue"
-# binding = "CACHE_QUEUE"
-
-# [[queues.consumers]]
-# queue = "cache-warming-queue"
-# max_batch_size = 10
-# max_batch_timeout = 5
 
 # Environment specific configurations
 [env.production]

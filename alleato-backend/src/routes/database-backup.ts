@@ -1,30 +1,16 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import type { Env } from '../types/env';
-import { CacheService, CacheTTL } from '../services/cache';
 
 const databaseRoutes = new Hono<{ Bindings: Env }>();
 
 // Enable CORS
 databaseRoutes.use('/*', cors());
 
-// Initialize cache service
-const getCacheService = (env: Env) => new CacheService(env);
-
-// Get all tables in the database (with caching)
+// Get all tables in the database
 databaseRoutes.get('/tables', async (c) => {
-  const cache = getCacheService(c.env);
-  const cacheKey = cache.keys.tableList();
-  
   try {
-    // Check cache first
-    const { data: cachedData, isStale } = await cache.get(cacheKey);
-    if (cachedData && !isStale) {
-      c.header('X-Cache', 'HIT');
-      return c.json(cachedData);
-    }
-
-    // Cache miss or stale - fetch from database
+    // Query to get all tables from sqlite_master
     const { results } = await c.env.DB.prepare(
       `SELECT name, sql FROM sqlite_master 
        WHERE type='table' 
@@ -33,17 +19,10 @@ databaseRoutes.get('/tables', async (c) => {
        ORDER BY name`
     ).all();
 
-    const response = {
+    return c.json({
       success: true,
       tables: results,
-      cached: false,
-    };
-
-    // Cache the response
-    await cache.set(cacheKey, response, CacheTTL.TABLE_LIST);
-    
-    c.header('X-Cache', 'MISS');
-    return c.json(response);
+    });
   } catch (error) {
     console.error('Error fetching tables:', error);
     return c.json({
@@ -53,13 +32,11 @@ databaseRoutes.get('/tables', async (c) => {
   }
 });
 
-// Get table schema (with caching)
+// Get table schema
 databaseRoutes.get('/tables/:tableName/schema', async (c) => {
-  const tableName = c.req.param('tableName');
-  const cache = getCacheService(c.env);
-  const cacheKey = cache.keys.tableSchema(tableName);
-  
   try {
+    const tableName = c.req.param('tableName');
+    
     // Validate table name to prevent SQL injection
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
       return c.json({
@@ -68,30 +45,16 @@ databaseRoutes.get('/tables/:tableName/schema', async (c) => {
       }, 400);
     }
 
-    // Check cache first
-    const { data: cachedData, isStale } = await cache.get(cacheKey);
-    if (cachedData && !isStale) {
-      c.header('X-Cache', 'HIT');
-      return c.json(cachedData);
-    }
-
-    // Get table info from database
+    // Get table info
     const { results } = await c.env.DB.prepare(
       `PRAGMA table_info('${tableName}')`
     ).all();
 
-    const response = {
+    return c.json({
       success: true,
       tableName,
       columns: results,
-      cached: false,
-    };
-
-    // Cache the response
-    await cache.set(cacheKey, response, CacheTTL.TABLE_SCHEMA);
-    
-    c.header('X-Cache', 'MISS');
-    return c.json(response);
+    });
   } catch (error) {
     console.error('Error fetching table schema:', error);
     return c.json({
@@ -101,19 +64,16 @@ databaseRoutes.get('/tables/:tableName/schema', async (c) => {
   }
 });
 
-// Get data from a specific table with pagination (with smart caching)
+// Get data from a specific table with pagination
 databaseRoutes.get('/tables/:tableName/data', async (c) => {
-  const tableName = c.req.param('tableName');
-  const page = parseInt(c.req.query('page') || '1');
-  const limit = parseInt(c.req.query('limit') || '50');
-  const sortBy = c.req.query('sortBy') || 'id';
-  const sortOrder = c.req.query('sortOrder') || 'asc';
-  const search = c.req.query('search') || '';
-  
-  const cache = getCacheService(c.env);
-  const cacheKey = cache.keys.tableData(tableName, page, limit, sortBy, sortOrder, search);
-  
   try {
+    const tableName = c.req.param('tableName');
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '50');
+    const sortBy = c.req.query('sortBy') || 'id';
+    const sortOrder = c.req.query('sortOrder') || 'asc';
+    const search = c.req.query('search') || '';
+    
     // Validate inputs
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
       return c.json({
@@ -136,18 +96,9 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
       }, 400);
     }
 
-    // Check cache for non-search queries (search results change frequently)
-    if (!search) {
-      const { data: cachedData, isStale } = await cache.get(cacheKey);
-      if (cachedData && !isStale) {
-        c.header('X-Cache', 'HIT');
-        return c.json(cachedData);
-      }
-    }
-
     const offset = (page - 1) * limit;
 
-    // Build and execute queries
+    // Get total count
     let countQuery = `SELECT COUNT(*) as count FROM ${tableName}`;
     let dataQuery = `SELECT * FROM ${tableName}`;
     
@@ -159,15 +110,12 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
       ).all();
       
       // Build search conditions for text columns
-      const textColumns = columns.filter((col: any) => 
-        ['TEXT', 'VARCHAR'].includes(col.type.toUpperCase()) || col.type.includes('CHAR')
-      );
+      const searchConditions = columns
+        .filter((col: any) => ['TEXT', 'VARCHAR'].includes(col.type.toUpperCase()) || col.type.includes('CHAR'))
+        .map((col: any) => `${col.name} LIKE ?`)
+        .join(' OR ');
       
-      if (textColumns.length > 0) {
-        const searchConditions = textColumns
-          .map((col: any) => `${col.name} LIKE ?`)
-          .join(' OR ');
-        
+      if (searchConditions) {
         const whereClause = ` WHERE ${searchConditions}`;
         countQuery += whereClause;
         dataQuery += whereClause;
@@ -204,18 +152,9 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
         results = dataResult.results;
       }
     } else {
-      // No search - use cached count if available
-      const countCacheKey = cache.keys.tableCount(tableName);
-      const { data: cachedCount } = await cache.get(countCacheKey);
-      
-      if (cachedCount) {
-        totalCount = cachedCount as number;
-      } else {
-        const countResult = await c.env.DB.prepare(countQuery).first();
-        totalCount = countResult?.count || 0;
-        // Cache the count
-        await cache.set(countCacheKey, totalCount, CacheTTL.TABLE_COUNT);
-      }
+      // No search - simple queries
+      const countResult = await c.env.DB.prepare(countQuery).first();
+      totalCount = countResult?.count || 0;
       
       const dataResult = await c.env.DB.prepare(dataQuery)
         .bind(limit, offset)
@@ -223,7 +162,7 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
       results = dataResult.results;
     }
 
-    const response = {
+    return c.json({
       success: true,
       data: results,
       pagination: {
@@ -232,16 +171,7 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
         totalCount,
         totalPages: Math.ceil(totalCount / limit),
       },
-      cached: false,
-    };
-
-    // Cache the response (only for non-search queries)
-    if (!search) {
-      await cache.set(cacheKey, response, CacheTTL.TABLE_DATA);
-    }
-    
-    c.header('X-Cache', search ? 'BYPASS' : 'MISS');
-    return c.json(response);
+    });
   } catch (error) {
     console.error('Error fetching table data:', error);
     return c.json({
@@ -251,14 +181,12 @@ databaseRoutes.get('/tables/:tableName/data', async (c) => {
   }
 });
 
-// Get distinct values for a column (with caching)
+// Get distinct values for a column (useful for filters)
 databaseRoutes.get('/tables/:tableName/column/:columnName/values', async (c) => {
-  const tableName = c.req.param('tableName');
-  const columnName = c.req.param('columnName');
-  const cache = getCacheService(c.env);
-  const cacheKey = cache.keys.columnValues(tableName, columnName);
-  
   try {
+    const tableName = c.req.param('tableName');
+    const columnName = c.req.param('columnName');
+    
     // Validate inputs
     if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
       return c.json({
@@ -274,13 +202,6 @@ databaseRoutes.get('/tables/:tableName/column/:columnName/values', async (c) => 
       }, 400);
     }
 
-    // Check cache first
-    const { data: cachedData, isStale } = await cache.get(cacheKey);
-    if (cachedData && !isStale) {
-      c.header('X-Cache', 'HIT');
-      return c.json(cachedData);
-    }
-
     const { results } = await c.env.DB.prepare(
       `SELECT DISTINCT ${columnName} as value, COUNT(*) as count 
        FROM ${tableName} 
@@ -290,42 +211,15 @@ databaseRoutes.get('/tables/:tableName/column/:columnName/values', async (c) => 
        LIMIT 100`
     ).all();
 
-    const response = {
+    return c.json({
       success: true,
       values: results,
-      cached: false,
-    };
-
-    // Cache the response
-    await cache.set(cacheKey, response, CacheTTL.COLUMN_VALUES);
-    
-    c.header('X-Cache', 'MISS');
-    return c.json(response);
+    });
   } catch (error) {
     console.error('Error fetching column values:', error);
     return c.json({
       success: false,
       error: 'Failed to fetch column values',
-    }, 500);
-  }
-});
-
-// Cache management endpoints
-databaseRoutes.post('/cache/invalidate/:tableName', async (c) => {
-  const tableName = c.req.param('tableName');
-  const cache = getCacheService(c.env);
-  
-  try {
-    await cache.invalidateTable(tableName);
-    return c.json({
-      success: true,
-      message: `Cache invalidated for table: ${tableName}`,
-    });
-  } catch (error) {
-    console.error('Error invalidating cache:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to invalidate cache',
     }, 500);
   }
 });
