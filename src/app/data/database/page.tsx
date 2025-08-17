@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { useTables } from "@/hooks/useTables"
+import { useTables, type DatabaseTable } from "@/hooks/useTables"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -11,7 +11,7 @@ import { Table, AlertCircle, ArrowRight, Columns, Activity, RefreshCcw } from "l
 
 export default function OptimizedDatabasePage() {
   const router = useRouter()
-  const { data: tables = [], isLoading, error, refetch, isFetching } = useTables()
+  const { data: tables = [] as DatabaseTable[], isLoading, error, refetch, isFetching } = useTables()
 
   const navigateToTable = useCallback((tableName: string) => {
     router.push(`/data/database/${tableName}`)
@@ -34,19 +34,19 @@ export default function OptimizedDatabasePage() {
 
   // Memoize table cards to prevent unnecessary re-renders
   const tableCards = useMemo(() => 
-    tables.map((table: any) => {
+    tables.map((table: DatabaseTable) => {
       const { columnCount, hasIndexes } = getTableInfo(table.sql)
       return (
         <Card 
           key={table.name} 
-          className="group cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-200 overflow-hidden border-muted"
+          className="group cursor-pointer hover:shadow-l hover:scale-[1.02] transition-all duration-200 overflow-hidden border-muted"
           onClick={() => navigateToTable(table.name)}
         >
-          <div className="h-2 bg-gradient-to-r from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-colors" />
-          <CardHeader className="pb-3">
+          <div className="h-2" />
+          <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-lg">
-                <div className="p-1.5 bg-muted rounded group-hover:bg-primary/10 transition-colors">
+                <div>
                   <Table className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
                 {table.name}

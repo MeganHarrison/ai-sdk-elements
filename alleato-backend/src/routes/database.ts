@@ -310,6 +310,191 @@ databaseRoutes.get('/tables/:tableName/column/:columnName/values', async (c) => 
   }
 });
 
+// Update a single row in a table
+databaseRoutes.put('/tables/:tableName/data/:id', async (c) => {
+  const tableName = c.req.param('tableName');
+  const id = c.req.param('id');
+  const updates = await c.req.json();
+  const cache = getCacheService(c.env);
+  
+  try {
+    // Validate table name
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      return c.json({
+        success: false,
+        error: 'Invalid table name',
+      }, 400);
+    }
+
+    // Remove id from updates if present
+    const { id: _, ...updateData } = updates;
+    
+    // Build UPDATE query
+    const columns = Object.keys(updateData);
+    if (columns.length === 0) {
+      return c.json({
+        success: false,
+        error: 'No fields to update',
+      }, 400);
+    }
+
+    // Validate column names
+    for (const col of columns) {
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
+        return c.json({
+          success: false,
+          error: `Invalid column name: ${col}`,
+        }, 400);
+      }
+    }
+
+    // Build parameterized query
+    const setClause = columns.map(col => `${col} = ?`).join(', ');
+    const query = `UPDATE ${tableName} SET ${setClause} WHERE id = ?`;
+    const values = [...columns.map(col => updateData[col]), id];
+
+    // Execute update
+    const result = await c.env.DB.prepare(query).bind(...values).run();
+
+    if (result.meta.changes === 0) {
+      return c.json({
+        success: false,
+        error: 'No rows updated. Record may not exist.',
+      }, 404);
+    }
+
+    // Invalidate relevant caches
+    await cache.invalidateTable(tableName);
+
+    // Fetch the updated row
+    const { results } = await c.env.DB.prepare(
+      `SELECT * FROM ${tableName} WHERE id = ?`
+    ).bind(id).all();
+
+    return c.json({
+      success: true,
+      data: results[0] || null,
+      message: 'Record updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating record:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to update record',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+});
+
+// Create a new row in a table
+databaseRoutes.post('/tables/:tableName/data', async (c) => {
+  const tableName = c.req.param('tableName');
+  const data = await c.req.json();
+  const cache = getCacheService(c.env);
+  
+  try {
+    // Validate table name
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      return c.json({
+        success: false,
+        error: 'Invalid table name',
+      }, 400);
+    }
+
+    const columns = Object.keys(data);
+    if (columns.length === 0) {
+      return c.json({
+        success: false,
+        error: 'No data provided',
+      }, 400);
+    }
+
+    // Validate column names
+    for (const col of columns) {
+      if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(col)) {
+        return c.json({
+          success: false,
+          error: `Invalid column name: ${col}`,
+        }, 400);
+      }
+    }
+
+    // Build INSERT query
+    const columnList = columns.join(', ');
+    const placeholders = columns.map(() => '?').join(', ');
+    const query = `INSERT INTO ${tableName} (${columnList}) VALUES (${placeholders})`;
+    const values = columns.map(col => data[col]);
+
+    // Execute insert
+    const result = await c.env.DB.prepare(query).bind(...values).run();
+
+    // Invalidate relevant caches
+    await cache.invalidateTable(tableName);
+
+    // Fetch the created row
+    const { results } = await c.env.DB.prepare(
+      `SELECT * FROM ${tableName} WHERE id = ?`
+    ).bind(result.meta.last_row_id).all();
+
+    return c.json({
+      success: true,
+      data: results[0] || null,
+      message: 'Record created successfully',
+    });
+  } catch (error) {
+    console.error('Error creating record:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to create record',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+});
+
+// Delete a row from a table
+databaseRoutes.delete('/tables/:tableName/data/:id', async (c) => {
+  const tableName = c.req.param('tableName');
+  const id = c.req.param('id');
+  const cache = getCacheService(c.env);
+  
+  try {
+    // Validate table name
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(tableName)) {
+      return c.json({
+        success: false,
+        error: 'Invalid table name',
+      }, 400);
+    }
+
+    // Execute delete
+    const result = await c.env.DB.prepare(
+      `DELETE FROM ${tableName} WHERE id = ?`
+    ).bind(id).run();
+
+    if (result.meta.changes === 0) {
+      return c.json({
+        success: false,
+        error: 'No rows deleted. Record may not exist.',
+      }, 404);
+    }
+
+    // Invalidate relevant caches
+    await cache.invalidateTable(tableName);
+
+    return c.json({
+      success: true,
+      message: 'Record deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to delete record',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    }, 500);
+  }
+});
+
 // Cache management endpoints
 databaseRoutes.post('/cache/invalidate/:tableName', async (c) => {
   const tableName = c.req.param('tableName');

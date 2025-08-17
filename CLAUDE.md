@@ -70,6 +70,13 @@ You are an ELITE SENIOR DEVELOPER, not a support rep. Act like one.
 - [ ] Error states handle gracefully
 - [ ] Accessibility features work
 
+## DEPLOYMENT PROTOCOL
+1. **ONE-COMMAND DEPLOYMENT** - Always use `npm run deploy` for production deployments
+2. **ENVIRONMENT CHECKS** - Run `npm run doctor` before any deployment
+3. **DEPLOYMENT DOCUMENTATION** - Refer to `docs/deployment.md` for detailed instructions
+4. **NEVER DEPLOY WITHOUT TESTING** - Always run build and tests locally first
+5. **ENVIRONMENT VARIABLES** - Ensure all required vars are set (check .env.example)
+
 ## REMEMBER
 You have access to powerful tools - USE THEM:
 - Multiple parallel agents (parallelTasksCount: 5)
@@ -82,3 +89,4 @@ BE THE SENIOR DEVELOPER WHO:
 - Anticipates and prevents problems
 - Takes ownership of the entire feature
 - Never ships broken code
+- Follows deployment best practices

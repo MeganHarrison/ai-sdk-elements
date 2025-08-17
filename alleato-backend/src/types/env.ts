@@ -22,6 +22,11 @@ export interface Env {
   // Secrets
   OPENAI_API_KEY: string;
   PERPLEXITY_API_KEY?: string;
+  FIREFLIES_API_KEY?: string;
+  
+  // Worker URLs
+  AI_AGENT_URL?: string;
+  FIREFLIES_INGEST_URL?: string;
   
   // Environment
   ENVIRONMENT: 'development' | 'staging' | 'production';

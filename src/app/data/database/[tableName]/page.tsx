@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { useTableData, useTableSchema } from "@/hooks/useTableData"
+import { useParams } from "next/navigation"
+import { useTableData, useTableSchema, useUpdateTableRow, useDeleteTableRow } from "@/hooks/useTableData"
 import { useDebounce } from "@/hooks/useDebounce"
 import { VirtualTable } from "@/components/ui/virtual-table"
+import { EditableTableCell } from "@/components/EditableTableCell"
 import {
   Table,
   TableBody,
@@ -35,6 +36,8 @@ import {
   Database,
   AlertCircle,
   Zap,
+  Edit,
+  Trash2,
 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
@@ -48,12 +51,15 @@ interface TableColumn {
   pk: number
 }
 
+type TableRow = Record<string, unknown>
+
 export default function OptimizedTableViewerPage() {
   const params = useParams()
   const tableName = params.tableName as string
   
   // UI state
   const [useVirtualization, setUseVirtualization] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   
   // Pagination state
   const [page, setPage] = useState(1)
@@ -67,37 +73,60 @@ export default function OptimizedTableViewerPage() {
   const [searchInput, setSearchInput] = useState("")
   const debouncedSearch = useDebounce(searchInput, 300)
 
-  // Define specific columns for the meetings table
-  const meetingsColumns = [
-    'title', 'date_time', 'duration', 'project', 'category', 
-    'meeting_type', 'tags', 'client', 'follow_up_required', 
-    'vector_processed', 'insight_generated'
-  ]
-
   // Fetch data using React Query
   const { data: schemaData, isLoading: schemaLoading, error: schemaError } = useTableSchema(tableName)
-  const allColumns = schemaData?.columns || []
   
   // Filter columns based on table name
   const columns = useMemo(() => {
+    const allColumns = (schemaData?.columns || []) as TableColumn[]
+    
+    // Define specific columns for the meetings table
+    const meetingsColumns = [
+      'title', 'date_time', 'duration', 'project', 'category', 
+      'meeting_type', 'tags', 'client', 'follow_up_required', 
+      'vector_processed', 'insight_generated'
+    ]
+
+    // Define specific columns for the projects table
+    const projectsColumns = [
+      'title', 'status_name', 'start_date', 'client_id'
+    ]
     if (tableName === 'meetings') {
-      return allColumns.filter((col: any) => 
+      return allColumns.filter((col) => 
         meetingsColumns.includes(col.name.toLowerCase())
-      ).sort((a: any, b: any) => {
+      ).sort((a, b) => {
         const aIndex = meetingsColumns.indexOf(a.name.toLowerCase())
         const bIndex = meetingsColumns.indexOf(b.name.toLowerCase())
         return aIndex - bIndex
       })
     }
+    
+    // Add projects table filtering
+    if (tableName === 'projects') {
+      return allColumns.filter((col) => 
+        projectsColumns.includes(col.name.toLowerCase())
+      ).sort((a, b) => {
+        const aIndex = projectsColumns.indexOf(a.name.toLowerCase())
+        const bIndex = projectsColumns.indexOf(b.name.toLowerCase())
+        return aIndex - bIndex
+      })
+    }
+    
     return allColumns
-  }, [allColumns, tableName])
+  }, [schemaData?.columns, tableName])
 
   // Set default sort when columns load
   useMemo(() => {
     if (columns.length > 0 && !sortBy) {
-      setSortBy(columns[0].name)
+      // For meetings table, default to date_time descending (most recent first)
+      if (tableName === 'meetings') {
+        setSortBy('date_time')
+        setSortOrder('desc')
+      } else {
+        setSortBy(columns[0].name)
+      }
     }
-  }, [columns, sortBy])
+  }, [columns, sortBy, tableName])
 
   const { 
     data: tableData, 
@@ -112,9 +141,13 @@ export default function OptimizedTableViewerPage() {
     search: debouncedSearch,
   })
 
-  const data = tableData?.data || []
+  const data = (tableData?.data || []) as TableRow[]
   const totalPages = tableData?.pagination?.totalPages || 1
   const totalCount = tableData?.pagination?.totalCount || 0
+  
+  // Mutations
+  const updateRow = useUpdateTableRow(tableName)
+  const deleteRow = useDeleteTableRow(tableName)
 
   // Memoized callbacks
   const handleSort = useCallback((columnName: string) => {
@@ -140,6 +173,25 @@ export default function OptimizedTableViewerPage() {
     // Special formatting for duration column in meetings table
     if (tableName === 'meetings' && column.name.toLowerCase() === 'duration' && typeof value === 'number') {
       return <span className="font-mono tabular-nums">{Math.round(value)} mins</span>
+    }
+    
+    // Special formatting for status_name column in projects table
+    if (tableName === 'projects' && column.name.toLowerCase() === 'status_name' && value) {
+      const statusColors: Record<string, string> = {
+        'active': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+        'completed': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+        'on hold': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+        'cancelled': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+        'in progress': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+      }
+      const statusValue = String(value).toLowerCase()
+      const colorClass = statusColors[statusValue] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+      
+      return (
+        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
+          {String(value)}
+        </span>
+      )
     }
     
     const type = column.type.toUpperCase()
@@ -203,7 +255,7 @@ export default function OptimizedTableViewerPage() {
 
   // Memoized virtual table columns
   const virtualColumns = useMemo(() => 
-    columns.map((column: any) => ({
+    columns.map((column) => ({
       key: column.name,
       header: (
         <div 
@@ -211,7 +263,7 @@ export default function OptimizedTableViewerPage() {
           onClick={() => handleSort(column.name)}
         >
           <span className="font-medium text-xs uppercase tracking-wider">
-            {column.name}
+            {column.name === 'status_name' && tableName === 'projects' ? 'STATUS' : column.name}
           </span>
           <div className="flex items-center gap-1">
             {renderSortIcon(column.name)}
@@ -221,7 +273,7 @@ export default function OptimizedTableViewerPage() {
       cell: (row: Record<string, unknown>) => formatCellValue(row[column.name], column),
       className: column.pk ? "font-medium" : undefined,
     })),
-    [columns, handleSort, renderSortIcon, formatCellValue]
+    [columns, handleSort, renderSortIcon, formatCellValue, tableName]
   )
 
   const error = schemaError || dataError
@@ -236,7 +288,7 @@ export default function OptimizedTableViewerPage() {
         </div>
         <Alert variant="destructive" className="max-w-2xl">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error.message || "Failed to load table"}</AlertDescription>
+          <AlertDescription>{(error as Error).message || "Failed to load table"}</AlertDescription>
         </Alert>
       </div>
     )
@@ -260,17 +312,31 @@ export default function OptimizedTableViewerPage() {
                 <span className="text-muted-foreground/50">•</span>
                 <span>{totalCount.toLocaleString()} {totalCount === 1 ? 'record' : 'records'}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="virtualization"
-                  checked={useVirtualization}
-                  onCheckedChange={setUseVirtualization}
-                  disabled={data.length === 0}
-                />
-                <Label htmlFor="virtualization" className="text-sm cursor-pointer text-muted-foreground">
-                  <Zap className="inline h-3 w-3 mr-1" />
-                  Virtual scrolling
-                </Label>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="virtualization"
+                    checked={useVirtualization}
+                    onCheckedChange={setUseVirtualization}
+                    disabled={data.length === 0}
+                  />
+                  <Label htmlFor="virtualization" className="text-sm cursor-pointer text-muted-foreground">
+                    <Zap className="inline h-3 w-3 mr-1" />
+                    Virtual scrolling
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="editMode"
+                    checked={editMode}
+                    onCheckedChange={setEditMode}
+                    disabled={data.length === 0 || useVirtualization}
+                  />
+                  <Label htmlFor="editMode" className="text-sm cursor-pointer text-muted-foreground">
+                    <Edit className="inline h-3 w-3 mr-1" />
+                    Edit mode
+                  </Label>
+                </div>
               </div>
             </div>
           </div>
@@ -316,7 +382,7 @@ export default function OptimizedTableViewerPage() {
             <Table className="relative">
               <TableHeader className="sticky top-0 z-10 bg-muted/50 backdrop-blur supports-[backdrop-filter]:bg-muted/40">
                 <TableRow className="border-b-2">
-                  {columns.map((column: any) => (
+                  {columns.map((column) => (
                     <TableHead 
                       key={column.name}
                       className="cursor-pointer hover:bg-muted/80 transition-colors group h-12"
@@ -324,7 +390,7 @@ export default function OptimizedTableViewerPage() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-medium text-xs uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                          {column.name}
+                          {column.name === 'status_name' && tableName === 'projects' ? 'STATUS' : column.name}
                         </span>
                         <div className="flex items-center gap-1">
                           {renderSortIcon(column.name)}
@@ -332,13 +398,20 @@ export default function OptimizedTableViewerPage() {
                       </div>
                     </TableHead>
                   ))}
+                  {editMode && (
+                    <TableHead className="w-12">
+                      <span className="font-medium text-xs uppercase tracking-wider text-muted-foreground">
+                        Actions
+                      </span>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   [...Array(10)].map((_, i) => (
                     <TableRow key={i}>
-                      {columns.map((column: any) => (
+                      {columns.map((column) => (
                         <TableCell key={column.name}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -365,21 +438,61 @@ export default function OptimizedTableViewerPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  data.map((row: any, i: number) => (
+                  data.map((row, i) => (
                     <TableRow 
                       key={i} 
                       className={`hover:bg-muted/30 transition-colors group/row ${
                         i % 2 === 0 ? 'bg-background' : 'bg-muted/10'
                       }`}
                     >
-                      {columns.map((column: any) => (
-                        <TableCell 
-                          key={column.name}
-                          className="text-sm py-3 px-4 first:font-medium"
-                        >
-                          {formatCellValue(row[column.name], column)}
-                        </TableCell>
-                      ))}
+                      {editMode ? (
+                        <>
+                          {columns.map((column) => (
+                            <TableCell 
+                              key={column.name}
+                              className="text-sm py-3 px-4 first:font-medium"
+                            >
+                              {column.pk === 1 ? (
+                                formatCellValue(row[column.name], column)
+                              ) : (
+                                <EditableTableCell
+                                  value={row[column.name]}
+                                  columnType={column.type}
+                                  onSave={async (newValue) => {
+                                    await updateRow.mutateAsync({
+                                      id: (row.id || row[columns.find((c) => c.pk === 1)?.name || 'id']) as string | number,
+                                      data: { [column.name]: newValue }
+                                    })
+                                  }}
+                                />
+                              )}
+                            </TableCell>
+                          ))}
+                          <TableCell className="w-12">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (confirm('Are you sure you want to delete this record?')) {
+                                  deleteRow.mutate((row.id || row[columns.find((c) => c.pk === 1)?.name || 'id']) as string | number)
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </>
+                      ) : (
+                        columns.map((column) => (
+                          <TableCell 
+                            key={column.name}
+                            className="text-sm py-3 px-4 first:font-medium"
+                          >
+                            {formatCellValue(row[column.name], column)}
+                          </TableCell>
+                        ))
+                      )}
                     </TableRow>
                   ))
                 )}

@@ -130,5 +130,46 @@ export const apiClient = {
       const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/column/${columnName}/values`);
       return response.json();
     },
+    
+    async updateTableRow(tableName: string, id: string | number, data: Record<string, unknown>) {
+      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update record');
+      }
+      return response.json();
+    },
+    
+    async createTableRow(tableName: string, data: Record<string, unknown>) {
+      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create record');
+      }
+      return response.json();
+    },
+    
+    async deleteTableRow(tableName: string, id: string | number) {
+      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete record');
+      }
+      return response.json();
+    },
   },
 };
