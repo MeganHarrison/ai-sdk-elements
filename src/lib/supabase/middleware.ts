@@ -38,10 +38,25 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims()
   const user = data?.claims
 
+  // Allow public access to homepage and chat API
+  const publicPaths = [
+    '/',
+    '/chat',
+    '/chat2'
+  ]
+  
+  const publicPrefixes = [
+    '/login',
+    '/auth',
+    '/api/chat'
+  ]
+  
+  const isPublicPath = publicPaths.includes(request.nextUrl.pathname) ||
+    publicPrefixes.some(prefix => request.nextUrl.pathname.startsWith(prefix))
+
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
+    !isPublicPath
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone()

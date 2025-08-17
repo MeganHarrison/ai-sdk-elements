@@ -45,13 +45,42 @@ app.post('/chat', async (c) => {
       return c.json(JSON.parse(cached));
     }
 
+    // LOG: Query details
+    console.log('[AI Agent] Processing query:', {
+      query,
+      projectId,
+      sessionId,
+      mode,
+      cacheKey
+    });
+
     // Retrieve relevant chunks
     const chunks = await retrieval.retrieveRelevantChunks(query, projectId);
+    
+    // LOG: Retrieved chunks
+    console.log('[AI Agent] Retrieved chunks:', {
+      count: chunks.length,
+      chunks: chunks.map(c => ({
+        id: c.id,
+        score: c.score,
+        text: c.text.substring(0, 100) + '...',
+        meetingId: c.meetingId,
+        projectId: c.projectId
+      }))
+    });
     
     // Get project context if projectId provided
     const projectContext = projectId ? 
       await retrieval.getProjectContext(projectId) : 
       undefined;
+
+    // LOG: Project context
+    console.log('[AI Agent] Project context:', projectContext ? {
+      projectId: projectContext.project?.id,
+      title: projectContext.project?.title,
+      activeTasks: projectContext.activeTasks?.length,
+      recentInsights: projectContext.recentInsights?.length
+    } : 'No project context');
 
     // Check for cross-project patterns if in strategy mode
     let crossProjectInsights = null;
@@ -62,6 +91,15 @@ app.post('/chat', async (c) => {
     // Build context and system prompt
     const systemPrompt = buildSystemPrompt(mode);
     const context = formatContext(chunks, projectContext);
+    
+    // LOG: Context being sent to AI
+    console.log('[AI Agent] Context for AI:', {
+      systemPromptLength: systemPrompt.length,
+      contextLength: context.length,
+      contextPreview: context.substring(0, 200) + '...',
+      hasChunks: chunks.length > 0,
+      hasProjectContext: !!projectContext
+    });
     
     // Prepare messages
     const messages: ChatMessage[] = [

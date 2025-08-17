@@ -6,7 +6,7 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -15,6 +15,7 @@
     "doctor": "tsx scripts/doctor.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.15",
     "@ai-sdk/react": "^2.0.14",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",

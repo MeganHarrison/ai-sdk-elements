@@ -12,35 +12,59 @@ export class RAGRetrieval {
     projectId?: string,
     topK: number = 5
   ): Promise<RetrievedChunk[]> {
-    // Generate query embedding
-    const embeddingResponse = await this.ai.run('@cf/baai/bge-base-en-v1.5', {
-      text: query,
+    console.log('[RAG Retrieval] Starting chunk retrieval:', {
+      query,
+      projectId,
+      topK
     });
-    
-    const queryEmbedding = embeddingResponse.data[0];
 
-    // Search with optional project filter
-    const searchOptions: any = {
-      topK: topK * 2, // Get more results for reranking
-      returnMetadata: true,
-    };
+    try {
+      // Generate query embedding
+      const embeddingResponse = await this.ai.run('@cf/baai/bge-base-en-v1.5', {
+        text: query,
+      });
+      
+      const queryEmbedding = embeddingResponse.data[0];
+      console.log('[RAG Retrieval] Generated embedding:', {
+        embeddingLength: queryEmbedding?.length,
+        firstValues: queryEmbedding?.slice(0, 5)
+      });
 
-    if (projectId) {
-      searchOptions.filter = { projectId };
-    }
+      // Search with optional project filter
+      const searchOptions: any = {
+        topK: topK * 2, // Get more results for reranking
+        returnMetadata: true,
+      };
 
-    const searchResults = await this.env.VECTOR_INDEX.query(
-      queryEmbedding,
-      searchOptions
-    );
+      if (projectId) {
+        searchOptions.filter = { projectId };
+      }
 
-    // Fetch chunk details from database
-    const chunkIds = searchResults.matches.map(m => m.id);
-    if (chunkIds.length === 0) {
-      return [];
-    }
+      console.log('[RAG Retrieval] Searching vector index with options:', searchOptions);
+      const searchResults = await this.env.VECTOR_INDEX.query(
+        queryEmbedding,
+        searchOptions
+      );
+      
+      console.log('[RAG Retrieval] Vector search results:', {
+        matchCount: searchResults.matches?.length || 0,
+        matches: searchResults.matches?.slice(0, 3).map(m => ({
+          id: m.id,
+          score: m.score,
+          metadata: m.metadata
+        }))
+      });
+
+      // Fetch chunk details from database
+      const chunkIds = searchResults.matches.map(m => m.id);
+      if (chunkIds.length === 0) {
+        console.log('[RAG Retrieval] No matches found in vector index');
+        return [];
+      }
 
     const placeholders = chunkIds.map(() => '?').join(',');
+    console.log('[RAG Retrieval] Fetching chunk details for IDs:', chunkIds.slice(0, 5));
+    
     const chunks = await this.env.DB.prepare(`
       SELECT dc.*, m.title as meeting_title, m.date as meeting_date,
              p.title as project_title
@@ -49,6 +73,11 @@ export class RAGRetrieval {
       LEFT JOIN projects p ON dc.project_id = p.id
       WHERE dc.id IN (${placeholders})
     `).bind(...chunkIds).all();
+    
+    console.log('[RAG Retrieval] Database results:', {
+      rowCount: chunks.results?.length || 0,
+      sampleRow: chunks.results?.[0]
+    });
 
     // Map and rerank results
     const retrievedChunks: RetrievedChunk[] = [];
@@ -73,9 +102,33 @@ export class RAGRetrieval {
         });
       }
     }
+    
+    console.log('[RAG Retrieval] Retrieved chunks before reranking:', {
+      count: retrievedChunks.length,
+      chunks: retrievedChunks.slice(0, 2).map(c => ({
+        id: c.id,
+        score: c.score,
+        meetingTitle: c.metadata?.meetingTitle,
+        textPreview: c.text.substring(0, 50) + '...'
+      }))
+    });
 
     // Rerank by relevance and recency
-    return this.rerankChunks(retrievedChunks, query, topK);
+    const reranked = await this.rerankChunks(retrievedChunks, query, topK);
+    console.log('[RAG Retrieval] Final reranked chunks:', {
+      count: reranked.length,
+      topChunk: reranked[0] ? {
+        id: reranked[0].id,
+        score: reranked[0].score,
+        meetingTitle: reranked[0].metadata?.meetingTitle
+      } : null
+    });
+    
+    return reranked;
+    } catch (error) {
+      console.error('[RAG Retrieval] Error retrieving chunks:', error);
+      return [];
+    }
   }
 
   private async rerankChunks(

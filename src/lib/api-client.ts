@@ -99,12 +99,12 @@ export const apiClient = {
   
   database: {
     async getTables() {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables`);
+      const response = await fetch(`/api/v1/database/tables`);
       return response.json();
     },
     
     async getTableSchema(tableName: string) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/schema`);
+      const response = await fetch(`/api/v1/database/tables/${tableName}/schema`);
       return response.json();
     },
     
@@ -122,17 +122,17 @@ export const apiClient = {
       if (options.sortOrder) params.append('sortOrder', options.sortOrder);
       if (options.search) params.append('search', options.search);
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data?${params}`);
+      const response = await fetch(`/api/v1/database/tables/${tableName}/data?${params}`);
       return response.json();
     },
     
     async getColumnValues(tableName: string, columnName: string) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/column/${columnName}/values`);
+      const response = await fetch(`/api/v1/database/tables/${tableName}/column/${columnName}/values`);
       return response.json();
     },
     
     async updateTableRow(tableName: string, id: string | number, data: Record<string, unknown>) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data/${id}`, {
+      const response = await fetch(`/api/v1/database/tables/${tableName}/data/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ export const apiClient = {
     },
     
     async createTableRow(tableName: string, data: Record<string, unknown>) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data`, {
+      const response = await fetch(`/api/v1/database/tables/${tableName}/data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ export const apiClient = {
     },
     
     async deleteTableRow(tableName: string, id: string | number) {
-      const response = await fetch(`${API_BASE_URL}/api/v1/database/tables/${tableName}/data/${id}`, {
+      const response = await fetch(`/api/v1/database/tables/${tableName}/data/${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
