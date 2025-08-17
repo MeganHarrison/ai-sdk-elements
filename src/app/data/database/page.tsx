@@ -34,7 +34,7 @@ export default function OptimizedDatabasePage() {
 
   // Memoize table cards to prevent unnecessary re-renders
   const tableCards = useMemo(() => 
-    tables.map((table) => {
+    tables.map((table: any) => {
       const { columnCount, hasIndexes } = getTableInfo(table.sql)
       return (
         <Card 

@@ -81,9 +81,9 @@ export default function OptimizedTableViewerPage() {
   // Filter columns based on table name
   const columns = useMemo(() => {
     if (tableName === 'meetings') {
-      return allColumns.filter(col => 
+      return allColumns.filter((col: any) => 
         meetingsColumns.includes(col.name.toLowerCase())
-      ).sort((a, b) => {
+      ).sort((a: any, b: any) => {
         const aIndex = meetingsColumns.indexOf(a.name.toLowerCase())
         const bIndex = meetingsColumns.indexOf(b.name.toLowerCase())
         return aIndex - bIndex
@@ -160,7 +160,7 @@ export default function OptimizedTableViewerPage() {
     
     if (type.includes('DATE') || type.includes('TIME')) {
       try {
-        const date = new Date(value)
+        const date = new Date(value as string | number)
         if (!isNaN(date.getTime())) {
           return <span className="font-mono">{date.toLocaleString()}</span>
         }
@@ -203,7 +203,7 @@ export default function OptimizedTableViewerPage() {
 
   // Memoized virtual table columns
   const virtualColumns = useMemo(() => 
-    columns.map(column => ({
+    columns.map((column: any) => ({
       key: column.name,
       header: (
         <div 
@@ -316,7 +316,7 @@ export default function OptimizedTableViewerPage() {
             <Table className="relative">
               <TableHeader className="sticky top-0 z-10 bg-muted/50 backdrop-blur supports-[backdrop-filter]:bg-muted/40">
                 <TableRow className="border-b-2">
-                  {columns.map((column) => (
+                  {columns.map((column: any) => (
                     <TableHead 
                       key={column.name}
                       className="cursor-pointer hover:bg-muted/80 transition-colors group h-12"
@@ -338,7 +338,7 @@ export default function OptimizedTableViewerPage() {
                 {loading ? (
                   [...Array(10)].map((_, i) => (
                     <TableRow key={i}>
-                      {columns.map((column) => (
+                      {columns.map((column: any) => (
                         <TableCell key={column.name}>
                           <Skeleton className="h-4 w-full" />
                         </TableCell>
@@ -365,14 +365,14 @@ export default function OptimizedTableViewerPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  data.map((row, i) => (
+                  data.map((row: any, i: number) => (
                     <TableRow 
                       key={i} 
                       className={`hover:bg-muted/30 transition-colors group/row ${
                         i % 2 === 0 ? 'bg-background' : 'bg-muted/10'
                       }`}
                     >
-                      {columns.map((column) => (
+                      {columns.map((column: any) => (
                         <TableCell 
                           key={column.name}
                           className="text-sm py-3 px-4 first:font-medium"

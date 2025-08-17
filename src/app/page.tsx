@@ -1,6 +1,6 @@
 'use client';
 
-import { Response } from '@/components/ai-elements/response';
+import { Response as AIResponse } from '@/components/ai-elements/response';
 
 import {
   Conversation,
@@ -110,9 +110,9 @@ const ChatBotDemo = () => {
                       switch (part.type) {
                         case 'text':
                           return (
-                            <Response key={`${message.id}-${i}`}>
+                            <AIResponse key={`${message.id}-${i}`}>
                               {part.text}
-                            </Response>
+                            </AIResponse>
                           );
                         case 'reasoning':
                           return (
