@@ -1,0 +1,20 @@
+// Icon placeholder exports
+export { ChevronDown as ChevronDownIcon } from 'lucide-react';
+export { EyeOff as EyeCloseIcon } from 'lucide-react';
+export { Eye as EyeIcon } from 'lucide-react';
+export { Clock as TimeIcon } from 'lucide-react';
+export { Search as SearchIcon } from 'lucide-react';
+export { Plus as PlusIcon } from 'lucide-react';
+export { Upload as UploadIcon } from 'lucide-react';
+export { Download as DownloadIcon } from 'lucide-react';
+export { Home as HomeIcon } from 'lucide-react';
+export { User as UserIcon } from 'lucide-react';
+export { Settings as SettingsIcon } from 'lucide-react';
+export { Trash2 as TrashIcon } from 'lucide-react';
+export { Edit3 as EditIcon } from 'lucide-react';
+export { X as CloseIcon } from 'lucide-react';
+export { Check as CheckIcon } from 'lucide-react';
+export { AlertCircle as WarningIcon } from 'lucide-react';
+export { Info as InfoIcon } from 'lucide-react';
+export { HelpCircle as HelpIcon } from 'lucide-react';
+export { Mail as EnvelopeIcon } from 'lucide-react';

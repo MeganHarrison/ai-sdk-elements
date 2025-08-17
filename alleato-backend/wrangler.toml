@@ -10,6 +10,7 @@ ENVIRONMENT = "development"
 binding = "DB"
 database_name = "alleato"
 database_id = "fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5"
+migrations_dir = "migrations"
 
 # R2 Storage
 [[r2_buckets]]

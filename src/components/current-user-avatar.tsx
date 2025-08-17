@@ -12,10 +12,14 @@ export const CurrentUserAvatar = () => {
     ?.map((word) => word[0])
     ?.join('')
     ?.toUpperCase()
+    ?.slice(0, 2)
 
   return (
     <Avatar>
-      {profileImage && <AvatarImage src={profileImage} alt={initials} />}
+      <AvatarImage 
+        src={profileImage || "/logos/Alleato Favicon.png"} 
+        alt={name || "User"} 
+      />
       <AvatarFallback>{initials}</AvatarFallback>
     </Avatar>
   )

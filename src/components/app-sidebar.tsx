@@ -25,14 +25,10 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 // This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   teams: [
     {
       name: "Alleato",
@@ -52,12 +48,20 @@ const data = {
           url: "/chat",
         },
         {
-          title: "Projects",
+          title: "Dashboard",
           url: "/dashboard",
         },
         {
+          title: "Projects",
+          url: "/data/projects",
+        },
+        {
           title: "Meetings",
-          url: "#",
+          url: "/data/meetings",
+        },
+        {
+          title: "Database",
+          url: "/data/database",
         },
       ],
     },
@@ -68,23 +72,23 @@ const data = {
       items: [
         {
           title: "Clients",
-          url: "#",
+          url: "/data/clients",
         },
         {
           title: "Sales",
-          url: "#",
+          url: "/data/",
         },
         {
           title: "CRM",
-          url: "#",
+          url: "/data/contacts",
         },
         {
           title: "Prospects",
-          url: "#",
+          url: "/data/prospects",
         },
         {
           title: "Estimates",
-          url: "#",
+          url: "/data/estimates",
         },
       ],
     },
@@ -155,6 +159,15 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const currentUser = useCurrentUser()
+  
+  // Use real user data or fallback to default
+  const userData = currentUser || {
+    name: "Loading...",
+    email: "",
+    avatar: null
+  }
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -165,7 +178,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
