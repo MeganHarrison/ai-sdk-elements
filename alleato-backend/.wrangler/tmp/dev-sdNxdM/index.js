@@ -32,7 +32,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// .wrangler/tmp/bundle-gkLlBg/checked-fetch.js
+// .wrangler/tmp/bundle-wPg9r8/checked-fetch.js
 function checkURL(request, init) {
   const url2 = request instanceof URL ? request : new URL(
     (typeof request === "string" ? new Request(request, init) : request).url
@@ -50,7 +50,7 @@ function checkURL(request, init) {
 }
 var urls;
 var init_checked_fetch = __esm({
-  ".wrangler/tmp/bundle-gkLlBg/checked-fetch.js"() {
+  ".wrangler/tmp/bundle-wPg9r8/checked-fetch.js"() {
     "use strict";
     urls = /* @__PURE__ */ new Set();
     __name(checkURL, "checkURL");
@@ -1925,15 +1925,15 @@ var require_src = __commonJS({
   }
 });
 
-// .wrangler/tmp/bundle-gkLlBg/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-wPg9r8/middleware-loader.entry.ts
 init_checked_fetch();
 init_modules_watch_stub();
 
-// .wrangler/tmp/bundle-gkLlBg/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-wPg9r8/middleware-insertion-facade.js
 init_checked_fetch();
 init_modules_watch_stub();
 
-// src/index-optimized.ts
+// src/index.ts
 init_checked_fetch();
 init_modules_watch_stub();
 
@@ -33503,7 +33503,7 @@ function analyticsMiddleware() {
 }
 __name(analyticsMiddleware, "analyticsMiddleware");
 
-// src/index-optimized.ts
+// src/index.ts
 var app = new Hono2();
 app.use("*", cors({
   origin: /* @__PURE__ */ __name((origin) => {
@@ -33627,7 +33627,7 @@ var scheduled = /* @__PURE__ */ __name(async (event, env, ctx) => {
     console.error("Cache warming error:", error40);
   }
 }, "scheduled");
-var index_optimized_default = app;
+var src_default = app;
 
 // node_modules/wrangler/templates/middleware/middleware-ensure-req-body-drained.ts
 init_checked_fetch();
@@ -33674,12 +33674,12 @@ var jsonError = /* @__PURE__ */ __name(async (request, env, _ctx, middlewareCtx)
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-gkLlBg/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-wPg9r8/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
 ];
-var middleware_insertion_facade_default = index_optimized_default;
+var middleware_insertion_facade_default = src_default;
 
 // node_modules/wrangler/templates/middleware/common.ts
 init_checked_fetch();
@@ -33708,7 +33708,7 @@ function __facade_invoke__(request, env, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-gkLlBg/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-wPg9r8/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;
@@ -33809,4 +33809,4 @@ export {
   middleware_loader_entry_default as default,
   scheduled
 };
-//# sourceMappingURL=index-optimized.js.map
+//# sourceMappingURL=index.js.map
