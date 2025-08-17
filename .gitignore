@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# workers
+workers/*/node_modules
+workers/*/.wrangler
+alleato-backend/.wrangler/state
+alleato-backend/.wrangler/tmp

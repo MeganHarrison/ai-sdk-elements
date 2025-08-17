@@ -200,8 +200,38 @@ export function useAIAgent(options: UseAIAgentOptions = {}): UseAIAgentReturn {
 }
 
 // Hook for project insights
+interface ProjectInsights {
+  project?: {
+    id: string;
+    title: string;
+    status: string;
+    client?: string;
+  };
+  sentiment?: {
+    current: number;
+    trend: 'improving' | 'stable' | 'declining';
+  };
+  activeTasks?: Array<{
+    description: string;
+    assignedTo?: string;
+    dueDate?: string;
+    priority: string;
+  }>;
+  recentInsights?: Array<{
+    category: string;
+    text: string;
+    meetingDate: string;
+  }>;
+  recentMeetings?: Array<{
+    title: string;
+    date: string;
+    summary: string;
+    keyPoints: string[];
+  }>;
+}
+
 export function useProjectInsights(projectId: string) {
-  const [insights, setInsights] = useState<any>(null);
+  const [insights, setInsights] = useState<ProjectInsights | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 

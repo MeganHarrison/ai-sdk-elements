@@ -35,24 +35,24 @@ echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 
 # Apply database migrations
 echo -e "\n${YELLOW}📊 Applying database migrations...${NC}"
-cd alleato-backend
+cd ../alleato-backend
 wrangler d1 migrations apply alleato --local=false
-cd ..
+cd ../scripts
 
 # Deploy Fireflies Ingest Worker
 echo -e "\n${YELLOW}🔄 Deploying Fireflies Ingest Worker...${NC}"
-cd workers/fireflies-ingest-worker
+cd ../workers/fireflies-ingest-worker
 npm install
 wrangler deploy
 
 # Get the deployed URL
 INGEST_URL=$(wrangler deployments list | grep -m1 "https://" | awk '{print $2}')
 echo -e "${GREEN}✅ Fireflies Ingest Worker deployed at: $INGEST_URL${NC}"
-cd ../..
+cd ../../scripts
 
 # Deploy Vectorize Worker
 echo -e "\n${YELLOW}🧮 Deploying Vectorize Worker...${NC}"
-cd workers/vectorize-worker
+cd ../workers/vectorize-worker
 npm install
 
 # Create Vectorize index if it doesn't exist
@@ -61,22 +61,22 @@ wrangler vectorize create fireflies-transcripts --dimensions=768 --metric=cosine
 
 wrangler deploy
 echo -e "${GREEN}✅ Vectorize Worker deployed${NC}"
-cd ../..
+cd ../../scripts
 
 # Deploy AI Agent Worker
 echo -e "\n${YELLOW}🤖 Deploying AI Agent Worker...${NC}"
-cd workers/ai-agent-worker
+cd ../workers/ai-agent-worker
 npm install
 wrangler deploy
 
 # Get the deployed URL
 AGENT_URL=$(wrangler deployments list | grep -m1 "https://" | awk '{print $2}')
 echo -e "${GREEN}✅ AI Agent Worker deployed at: $AGENT_URL${NC}"
-cd ../..
+cd ../../scripts
 
 # Update main backend with worker URLs
 echo -e "\n${YELLOW}🔧 Updating main backend configuration...${NC}"
-cd alleato-backend
+cd ../alleato-backend
 
 # Add worker URLs to wrangler.toml
 cat >> wrangler.toml << EOF
@@ -89,7 +89,7 @@ EOF
 # Deploy main backend with updated configuration
 wrangler deploy
 echo -e "${GREEN}✅ Main backend updated and deployed${NC}"
-cd ..
+cd ../scripts
 
 # Summary
 echo -e "\n${GREEN}🎉 RAG Pipeline deployment complete!${NC}"
