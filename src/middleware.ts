@@ -1,8 +1,25 @@
 import { updateSession } from '@/lib/supabase/middleware'
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
+import { siteConfig } from '@/lib/config/site'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Handle CORS for the custom domain
+  const origin = request.headers.get('origin')
+  const response = await updateSession(request)
+  
+  // Add CORS headers if origin is allowed
+  if (origin && siteConfig.cors.allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  }
+  
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 200, headers: response.headers })
+  }
+  
+  return response
 }
 
 export const config = {

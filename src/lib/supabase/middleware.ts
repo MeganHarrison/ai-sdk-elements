@@ -42,13 +42,16 @@ export async function updateSession(request: NextRequest) {
   const publicPaths = [
     '/',
     '/chat',
-    '/chat2'
+    '/chat2',
+    '/projects'  // Temporarily added for testing
   ]
   
   const publicPrefixes = [
     '/login',
     '/auth',
-    '/api/chat'
+    '/api/chat',
+    '/api/v1/projects',  // Temporarily added for testing
+    '/projects/'  // Temporarily added for testing individual project pages
   ]
   
   const isPublicPath = publicPaths.includes(request.nextUrl.pathname) ||

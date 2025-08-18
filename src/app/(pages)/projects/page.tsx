@@ -98,9 +98,9 @@ export default function ProjectsPage() {
 
   // Memoize project cards to prevent unnecessary re-renders
   const projectCards = useMemo(() => 
-    projects.map((project: SupabaseProject) => {
-      const hasBudget = project.budget
-      const hasTeam = project.team_members && project.team_members.length > 0
+    projects.map((project: Project) => {
+      const hasBudget = project.metadata?.budget
+      const hasTeam = project.metadata?.team_members && project.metadata.team_members.length > 0
       
       return (
         <Card 
@@ -120,10 +120,10 @@ export default function ProjectsPage() {
               <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                 {project.status.replace('_', ' ')}
               </span>
-              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(project.priority)}`}>
+              <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(project.priority || '')}`}>
                 {project.priority}
               </span>
-              {project.tags && project.tags.length > 0 && project.tags.slice(0, 2).map((tag) => (
+              {project.metadata?.tags && project.metadata.tags.length > 0 && project.metadata.tags.slice(0, 2).map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
@@ -155,27 +155,27 @@ export default function ProjectsPage() {
                 {hasTeam && (
                   <div className="flex items-center gap-1">
                     <Users className="h-3 w-3" />
-                    <span>{project.team_members!.length} members</span>
+                    <span>{project.metadata!.team_members!.length} members</span>
                   </div>
                 )}
                 {hasBudget && (
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-3 w-3" />
-                    <span>${project.budget!.toLocaleString()}</span>
+                    <span>${project.metadata!.budget!.toLocaleString()}</span>
                   </div>
                 )}
-                {project.progress !== undefined && (
+                {project.metadata?.progress !== undefined && (
                   <div className="flex items-center gap-1">
                     <Activity className="h-3 w-3" />
-                    <span>{project.progress}%</span>
+                    <span>{project.metadata!.progress}%</span>
                   </div>
                 )}
               </div>
 
-              {project.client_name && (
+              {project.metadata?.client_name && (
                 <div className="flex items-center gap-1">
                   <Building2 className="h-3 w-3" />
-                  <span className="text-xs">{project.client_name}</span>
+                  <span className="text-xs">{project.metadata!.client_name}</span>
                 </div>
               )}
             </div>
@@ -245,10 +245,22 @@ export default function ProjectsPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription className="ml-2">
             {(error as Error).message}
-            {(error as any)?.code === '42P01' && (
-              <div className="mt-2">
-                <p className="font-medium">The projects table doesn't exist in Supabase.</p>
-                <p className="text-sm mt-1">Please create the projects table in your Supabase dashboard with the required columns.</p>
+            {((error as any)?.code === '42P01' || (error as any)?.code === 'PGRST204') && (
+              <div className="mt-3 space-y-3">
+                <p className="font-medium">📦 The projects table needs to be set up in Supabase</p>
+                <div className="bg-muted/50 p-3 rounded-lg space-y-2 text-sm">
+                  <p className="font-medium">Quick Setup Instructions:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>Go to your Supabase dashboard</li>
+                    <li>Navigate to SQL Editor</li>
+                    <li>Copy the SQL from: <code className="px-1 py-0.5 bg-muted rounded text-xs">supabase/migrations/create_projects_table.sql</code></li>
+                    <li>Run the SQL to create the table with sample data</li>
+                    <li>Refresh this page to see your projects!</li>
+                  </ol>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Or run: <code className="px-1 py-0.5 bg-muted rounded">node scripts/setup-projects-table.js</code> for detailed instructions
+                </p>
               </div>
             )}
           </AlertDescription>
