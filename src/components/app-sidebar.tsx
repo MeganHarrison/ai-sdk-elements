@@ -50,7 +50,7 @@ const data = {
         },
         {
           title: "Projects",
-          url: "/data/projects",
+          url: "/projects",
         },
         {
           title: "Meetings",

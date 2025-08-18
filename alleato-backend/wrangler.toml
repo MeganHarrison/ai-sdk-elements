@@ -32,6 +32,11 @@ id = "31fe3137b6f543c89fd8dc84a511691e"
 binding = "RATE_LIMIT"
 id = "012891234b664e7c88bb57e48295ed25"
 
+# Hyperdrive Configuration
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "YOUR_HYPERDRIVE_ID"  # Replace with your actual Hyperdrive ID
+
 # Analytics Engine (uncomment when ready to set up)
 # [[analytics_engine_datasets]]
 # binding = "ANALYTICS"

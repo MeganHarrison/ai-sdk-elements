@@ -7,6 +7,7 @@ import { ragRoutes } from './routes/rag';
 import { meetingsProdRoutes } from './routes/meetings-prod';
 import { databaseRoutes } from './routes/database-optimized';
 import { aiAgentRoutes } from './routes/ai-agent';
+import projectsRoutes from './routes/projects';
 import { rateLimitMiddleware, createEndpointRateLimiter } from './middleware/rate-limit';
 import { analyticsMiddleware } from './services/analytics';
 import { RateLimitPresets } from './services/rate-limiter';
@@ -95,6 +96,7 @@ api.route('/rag', ragRoutes);
 api.route('/meetings', meetingsProdRoutes);
 api.route('/database', databaseRoutes);
 api.route('/ai-agent', aiAgentRoutes);
+api.route('/projects', projectsRoutes);
 
 // Admin endpoints for cache management
 const admin = api.basePath('/admin');

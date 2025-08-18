@@ -46,12 +46,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>Enter your email below to login to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <div className="flex flex-col gap-2 text-center">
+        <h1 className="text-2xl font-bold">Login</h1>
+        <p className="text-muted-foreground text-sm text-balance">
+          Enter your email below to login to your account
+        </p>
+      </div>
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
@@ -95,8 +95,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </Link>
             </div>
           </form>
-        </CardContent>
-      </Card>
     </div>
   )
 }

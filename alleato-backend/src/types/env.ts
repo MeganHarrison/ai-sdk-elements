@@ -10,6 +10,9 @@ export interface Env {
   CACHE: KVNamespace;
   RATE_LIMIT: KVNamespace;
   
+  // Hyperdrive for PostgreSQL connection
+  HYPERDRIVE?: Hyperdrive;
+  
   // Analytics (optional)
   ANALYTICS?: AnalyticsEngineDataset;
   
