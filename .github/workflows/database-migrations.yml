@@ -1,0 +1,85 @@
+name: Deploy Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+      - 'drizzle/**'
+  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+
+jobs:
+  deploy-migrations:
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Link Supabase project
+        run: |
+          npx supabase link \
+            --project-ref lgveqfnpkxvzbnnwuled \
+            --password ${{ secrets.SUPABASE_DB_PASSWORD }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      
+      - name: Run database migrations
+        run: |
+          echo "🚀 Deploying database migrations..."
+          npx supabase db push --password ${{ secrets.SUPABASE_DB_PASSWORD }}
+          echo "✅ Migrations deployed successfully"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      
+      - name: Generate migration report
+        if: always()
+        run: |
+          echo "## 🗄️ Database Migration Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** lgveqfnpkxvzbnnwuled" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### Migrations Applied" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -la supabase/migrations/ 2>/dev/null || echo "No migrations found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      
+      - name: Trigger type update
+        if: success()
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: update-database-types
+          client-payload: '{"environment": "${{ github.event.inputs.environment || 'production' }}"}'

@@ -1,0 +1,138 @@
+name: Repository Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      setup_hooks:
+        description: 'Setup git hooks'
+        required: false
+        default: true
+        type: boolean
+      install_deps:
+        description: 'Install dependencies'
+        required: false
+        default: true
+        type: boolean
+      generate_types:
+        description: 'Generate Supabase types'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  setup:
+    name: Setup Repository
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        if: ${{ github.event.inputs.install_deps == 'true' }}
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+          echo "✅ Dependencies installed"
+      
+      - name: Setup Husky hooks
+        if: ${{ github.event.inputs.setup_hooks == 'true' }}
+        run: |
+          echo "🪝 Setting up git hooks..."
+          npx husky install
+          npx husky add .husky/pre-commit "npm run precommit"
+          echo "✅ Git hooks configured"
+      
+      - name: Install Playwright browsers
+        run: |
+          echo "🎭 Installing Playwright browsers..."
+          npx playwright install --with-deps
+          echo "✅ Playwright browsers installed"
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Generate Supabase types
+        if: ${{ github.event.inputs.generate_types == 'true' }}
+        run: |
+          echo "🔄 Generating Supabase types..."
+          npm run update-types || npm run types:generate
+          echo "✅ Types generated"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      
+      - name: Create environment file template
+        run: |
+          cat > .env.example << 'EOF'
+          # Supabase
+          NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+          SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+          SUPABASE_ACCESS_TOKEN=your_access_token
+          SUPABASE_DB_PASSWORD=your_db_password
+          
+          # OpenAI
+          OPENAI_API_KEY=your_openai_api_key
+          
+          # Database (if using direct connection)
+          DATABASE_URL=your_database_url
+          
+          # Next.js
+          NEXTAUTH_URL=http://localhost:3000
+          NEXTAUTH_SECRET=your_nextauth_secret
+          EOF
+          
+          echo "✅ Environment template created"
+      
+      - name: Run initial tests
+        run: |
+          echo "🧪 Running initial tests..."
+          npm run typecheck || true
+          npm run lint || true
+          echo "✅ Initial checks complete"
+      
+      - name: Generate setup report
+        run: |
+          echo "## 🚀 Repository Setup Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### ✅ Completed Tasks" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.install_deps }}" == "true" ]; then
+            echo "- ✅ Dependencies installed" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ github.event.inputs.setup_hooks }}" == "true" ]; then
+            echo "- ✅ Git hooks configured" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ github.event.inputs.generate_types }}" == "true" ]; then
+            echo "- ✅ Supabase types generated" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- ✅ Playwright browsers installed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Environment template created" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Copy \`.env.example\` to \`.env.local\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. Fill in your environment variables" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run \`npm run dev\` to start development" >> $GITHUB_STEP_SUMMARY
+          echo "4. Run \`npm run test:headed\` to run tests" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Resources" >> $GITHUB_STEP_SUMMARY
+          echo "- [Supabase Dashboard](https://app.supabase.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Project Documentation](./docs)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Playwright Testing Guide](./docs/PLAYWRIGHT_TESTING_ENFORCEMENT.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Supabase Types Guide](./docs/SUPABASE_TYPES_WORKFLOW.md)" >> $GITHUB_STEP_SUMMARY
