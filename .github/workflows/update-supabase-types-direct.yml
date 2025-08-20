@@ -30,15 +30,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-      
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
@@ -47,7 +38,7 @@ jobs:
       - name: Generate TypeScript types
         run: |
           echo "🔄 Generating Supabase types..."
-          npx supabase gen types typescript \
+          supabase gen types typescript \
             --project-id lgveqfnpkxvzbnnwuled \
             --schema public \
             > database.types.ts
