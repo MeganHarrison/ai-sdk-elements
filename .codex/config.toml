@@ -1,0 +1,26 @@
+[project]
+name = "AI Agent Hub"
+context_files = ["agents.md"]
+
+[openai]
+model = "gpt-5"
+temperature = 0.3
+
+[logging]
+level = "info"
+
+# ───────────────────────────────
+# MCP Servers
+# ───────────────────────────────
+
+[[mcp]]
+id = "supabase"
+command = "npx"
+args = ["supabase-mcp", "start"]
+env = { SUPABASE_URL = "https://your-project.supabase.co", SUPABASE_SERVICE_KEY = "env:SUPABASE_SERVICE_KEY" }
+
+[[mcp]]
+id = "cloudflare"
+command = "npx"
+args = ["cloudflare-mcp", "start"]
+env = { CLOUDFLARE_API_TOKEN = "env:CLOUDFLARE_API_TOKEN", CLOUDFLARE_ACCOUNT_ID = "env:CLOUDFLARE_ACCOUNT_ID" }

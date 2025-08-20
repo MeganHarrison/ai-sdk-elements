@@ -6,6 +6,14 @@ export interface ArtifactData {
   content?: string;
   title?: string;
   type?: string;
+  documentId?: string;
+  kind?: string;
+  boundingBox?: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
 }
 
 export const initialArtifactData: ArtifactData = {
@@ -14,6 +22,8 @@ export const initialArtifactData: ArtifactData = {
   content: '',
   title: '',
   type: '',
+  documentId: 'init',
+  kind: '',
 };
 
 export function useArtifact() {

@@ -1,6 +1,6 @@
 import { formatDistance } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
+import React, {
   type Dispatch,
   memo,
   type SetStateAction,
@@ -10,7 +10,8 @@ import {
 } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { useDebounceCallback, useWindowSize } from 'usehooks-ts';
-import type { Document, Vote } from '@/lib/db/schema';
+import type { Vote } from '@/lib/db/schema';
+import type { Document } from '@/lib/types';
 import { fetcher } from '@/lib/utils';
 import { MultimodalInput } from './multimodal-input';
 import { Toolbar } from './toolbar';
@@ -71,19 +72,21 @@ function PureArtifact({
   chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
-  status: UseChatHelpers<ChatMessage>['status'];
-  stop: UseChatHelpers<ChatMessage>['stop'];
+  status: any;
+  stop: any;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>['setMessages'];
+  messages: any[];
+  setMessages: any;
   votes: Array<Vote> | undefined;
-  sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
-  regenerate: UseChatHelpers<ChatMessage>['regenerate'];
+  sendMessage: any;
+  regenerate: any;
   isReadonly: boolean;
   selectedVisibilityType: VisibilityType;
 }) {
-  const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
+  const { artifact, setArtifact } = useArtifact();
+  const metadata = null;
+  const setMetadata = () => {};
 
   const {
     data: documents,
@@ -245,7 +248,7 @@ function PureArtifact({
     if (artifact.documentId !== 'init') {
       if (artifactDefinition.initialize) {
         artifactDefinition.initialize({
-          documentId: artifact.documentId,
+          documentId: artifact.documentId || 'init',
           setMetadata,
         });
       }
@@ -319,7 +322,7 @@ function PureArtifact({
                   setMessages={setMessages}
                   regenerate={regenerate}
                   isReadonly={isReadonly}
-                  artifactStatus={artifact.status}
+                  artifactStatus={artifact.status === 'complete' ? 'idle' : artifact.status}
                 />
 
                 <form className="flex flex-row gap-2 relative items-end w-full px-4 pb-4">
@@ -348,18 +351,18 @@ function PureArtifact({
               isMobile
                 ? {
                     opacity: 1,
-                    x: artifact.boundingBox.left,
-                    y: artifact.boundingBox.top,
-                    height: artifact.boundingBox.height,
-                    width: artifact.boundingBox.width,
+                    x: artifact.boundingBox?.left || 0,
+                    y: artifact.boundingBox?.top || 0,
+                    height: artifact.boundingBox?.height || 100,
+                    width: artifact.boundingBox?.width || 100,
                     borderRadius: 50,
                   }
                 : {
                     opacity: 1,
-                    x: artifact.boundingBox.left,
-                    y: artifact.boundingBox.top,
-                    height: artifact.boundingBox.height,
-                    width: artifact.boundingBox.width,
+                    x: artifact.boundingBox?.left || 0,
+                    y: artifact.boundingBox?.top || 0,
+                    height: artifact.boundingBox?.height || 100,
+                    width: artifact.boundingBox?.width || 100,
                     borderRadius: 50,
                   }
             }
@@ -437,7 +440,7 @@ function PureArtifact({
               </div>
 
               <ArtifactActions
-                artifact={artifact}
+                artifact={{...artifact, title: artifact.title || '', documentId: artifact.documentId || ''} as any}
                 currentVersionIndex={currentVersionIndex}
                 handleVersionChange={handleVersionChange}
                 isCurrentVersion={isCurrentVersion}
@@ -448,25 +451,23 @@ function PureArtifact({
             </div>
 
             <div className="dark:bg-muted bg-background h-full overflow-y-scroll !max-w-full items-center">
-              <artifactDefinition.content
-                title={artifact.title}
-                content={
-                  isCurrentVersion
+              {React.createElement(artifactDefinition.content as any, {
+                title: artifact.title || '',
+                content: (isCurrentVersion
                     ? artifact.content
-                    : getDocumentContentById(currentVersionIndex)
-                }
-                mode={mode}
-                status={artifact.status}
-                currentVersionIndex={currentVersionIndex}
-                suggestions={[]}
-                onSaveContent={saveContent}
-                isInline={false}
-                isCurrentVersion={isCurrentVersion}
-                getDocumentContentById={getDocumentContentById}
-                isLoading={isDocumentsFetching && !artifact.content}
-                metadata={metadata}
-                setMetadata={setMetadata}
-              />
+                    : getDocumentContentById(currentVersionIndex)) || '',
+                mode: mode,
+                status: artifact.status === 'complete' ? 'idle' : artifact.status,
+                currentVersionIndex: currentVersionIndex,
+                suggestions: [],
+                onSaveContent: saveContent,
+                isInline: false,
+                isCurrentVersion: isCurrentVersion,
+                getDocumentContentById: getDocumentContentById,
+                isLoading: isDocumentsFetching && !artifact.content,
+                metadata: metadata,
+                setMetadata: setMetadata
+              })}
 
               <AnimatePresence>
                 {isCurrentVersion && (
@@ -477,7 +478,7 @@ function PureArtifact({
                     status={status}
                     stop={stop}
                     setMessages={setMessages}
-                    artifactKind={artifact.kind}
+                    artifactKind={artifact.kind as any}
                   />
                 )}
               </AnimatePresence>

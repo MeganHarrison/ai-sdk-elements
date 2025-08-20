@@ -79,7 +79,7 @@ export const codeArtifact = new Artifact<'code', Metadata>({
     if (streamPart.type === 'data-codeDelta') {
       setArtifact((draftArtifact) => ({
         ...draftArtifact,
-        content: streamPart.data,
+        content: (streamPart.data as any).data || streamPart.data,
         isVisible:
           draftArtifact.status === 'streaming' &&
           draftArtifact.content.length > 300 &&
@@ -252,12 +252,8 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: 'user',
-          parts: [
-            {
-              type: 'text',
-              text: 'Add comments to the code snippet for understanding',
-            },
-          ],
+          content: 'Add comments to the code snippet for understanding',
+          createdAt: new Date(),
         });
       },
     },
@@ -267,12 +263,8 @@ export const codeArtifact = new Artifact<'code', Metadata>({
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: 'user',
-          parts: [
-            {
-              type: 'text',
-              text: 'Add logs to the code snippet for debugging',
-            },
-          ],
+          content: 'Add logs to the code snippet for debugging',
+          createdAt: new Date(),
         });
       },
     },

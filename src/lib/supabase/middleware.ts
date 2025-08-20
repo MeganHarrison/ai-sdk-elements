@@ -43,7 +43,8 @@ export async function updateSession(request: NextRequest) {
     '/',
     '/chat',
     '/chat2',
-    '/projects'  // Temporarily added for testing
+    '/projects',  // Temporarily added for testing
+    '/projects2'  // Temporarily added for testing
   ]
   
   const publicPrefixes = [
@@ -51,7 +52,11 @@ export async function updateSession(request: NextRequest) {
     '/auth',
     '/api/chat',
     '/api/v1/projects',  // Temporarily added for testing
-    '/projects/'  // Temporarily added for testing individual project pages
+    '/api/mcp',  // MCP API endpoint for testing
+    '/api/insights',  // Insights API endpoint
+    '/projects/',  // Temporarily added for testing individual project pages
+    '/projects2/',  // Temporarily added for testing individual project pages
+    '/mcp-test'  // MCP test page
   ]
   
   const isPublicPath = publicPaths.includes(request.nextUrl.pathname) ||

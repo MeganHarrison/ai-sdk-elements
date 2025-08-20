@@ -35,7 +35,7 @@ id = "012891234b664e7c88bb57e48295ed25"
 # Hyperdrive Configuration
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "YOUR_HYPERDRIVE_ID"  # Replace with your actual Hyperdrive ID
+id = "81ca12eec05e4eeab6334050ae1a4dda"  # Replace with your actual Hyperdrive ID
 
 # Analytics Engine (uncomment when ready to set up)
 # [[analytics_engine_datasets]]

@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "alleato-backend/**", "notion-sdk-js/**", "workers/**"]
+  "exclude": ["node_modules", "alleato-backend/**", "notion-sdk-js/**", "workers/**", "ai-agent-supabase-worker/**", "ai-sdk-rag-starter/**"]
 }

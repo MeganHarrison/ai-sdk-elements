@@ -32,7 +32,7 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
     if (streamPart.type === 'data-suggestion') {
       setMetadata((metadata) => {
         return {
-          suggestions: [...metadata.suggestions, streamPart.data],
+          suggestions: [...metadata.suggestions, streamPart.data as unknown as Suggestion],
         };
       });
     }
@@ -41,7 +41,7 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
       setArtifact((draftArtifact) => {
         return {
           ...draftArtifact,
-          content: draftArtifact.content + streamPart.data,
+          content: draftArtifact.content + ((streamPart.data as any).data || streamPart.data),
           isVisible:
             draftArtifact.status === 'streaming' &&
             draftArtifact.content.length > 400 &&
@@ -153,12 +153,8 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: 'user',
-          parts: [
-            {
-              type: 'text',
-              text: 'Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.',
-            },
-          ],
+          content: 'Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.',
+          createdAt: new Date(),
         });
       },
     },
@@ -168,12 +164,8 @@ export const textArtifact = new Artifact<'text', TextArtifactMetadata>({
       onClick: ({ sendMessage }) => {
         sendMessage({
           role: 'user',
-          parts: [
-            {
-              type: 'text',
-              text: 'Please add suggestions you have that could improve the writing.',
-            },
-          ],
+          content: 'Please add suggestions you have that could improve the writing.',
+          createdAt: new Date(),
         });
       },
     },

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   BookOpen,
   Bot,
@@ -9,20 +9,20 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
-import { useCurrentUser } from "@/hooks/use-current-user"
+} from "@/components/ui/sidebar";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 // This is sample data.
 const data = {
@@ -41,24 +41,52 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "Insights",
+          title: "Chat",
           url: "/chat",
         },
         {
-          title: "Dashboard",
-          url: "/dashboard",
+          title: "Assistant",
+          url: "/assistant",
+        },
+        {
+          title: "Chat 2",
+          url: "/chat2",
+        },
+        {
+          title: "Chat 3",
+          url: "/chat3",
+        },
+        {
+          title: "Chat 4",
+          url: "/chat4",
         },
         {
           title: "Projects",
           url: "/projects",
         },
         {
-          title: "Meetings",
-          url: "/data/meetings",
+          title: "Projects 2",
+          url: "/projects2",
+        },
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+        },
+        {
+          title: "Data",
+          url: "/data",
         },
         {
           title: "Database",
           url: "/data/database",
+        },
+        {
+          title: "Meetings",
+          url: "/data/meetings",
+        },
+        {
+          title: "Insights",
+          url: "/insights",
         },
       ],
     },
@@ -72,16 +100,16 @@ const data = {
           url: "/data/clients",
         },
         {
-          title: "Sales",
-          url: "/data/",
+          title: "API Docs",
+          url: "/api-docs/",
         },
         {
-          title: "CRM",
-          url: "/data/contacts",
+          title: "Assistant",
+          url: "/assistant",
         },
         {
-          title: "Prospects",
-          url: "/data/prospects",
+          title: "Calendar",
+          url: "/calendar",
         },
         {
           title: "Estimates",
@@ -153,17 +181,17 @@ const data = {
       icon: Map,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const currentUser = useCurrentUser()
-  
+  const currentUser = useCurrentUser();
+
   // Use real user data or fallback to default
   const userData = currentUser || {
     name: "Loading...",
     email: "",
-    avatar: null
-  }
+    avatar: null,
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -179,5 +207,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }

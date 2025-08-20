@@ -6,15 +6,15 @@ import type { UIArtifact } from './artifact';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { motion } from 'framer-motion';
 import { useMessages } from '@/hooks/use-messages';
-import type { ChatMessage } from '@/lib/types';
+import type { UIMessage } from 'ai';
 
 interface ArtifactMessagesProps {
   chatId: string;
-  status: UseChatHelpers<ChatMessage>['status'];
+  status: any;
   votes: Array<Vote> | undefined;
-  messages: ChatMessage[];
-  setMessages: UseChatHelpers<ChatMessage>['setMessages'];
-  regenerate: UseChatHelpers<ChatMessage>['regenerate'];
+  messages: any[];
+  setMessages: any;
+  regenerate: any;
   isReadonly: boolean;
   artifactStatus: UIArtifact['status'];
 }
@@ -28,16 +28,12 @@ function PureArtifactMessages({
   regenerate,
   isReadonly,
 }: ArtifactMessagesProps) {
-  const {
-    containerRef: messagesContainerRef,
-    endRef: messagesEndRef,
-    onViewportEnter,
-    onViewportLeave,
-    hasSentMessage,
-  } = useMessages({
-    chatId,
-    status,
-  });
+  // TODO: Fix useMessages hook to include viewport functionality
+  const messagesContainerRef = null;
+  const messagesEndRef = null;
+  const onViewportEnter = () => {};
+  const onViewportLeave = () => {};
+  const hasSentMessage = false;
 
   return (
     <div

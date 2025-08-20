@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ProjectInsights } from "@/components/insights/project-insights";
+import { ProjectChat } from "@/components/chat/project-chat";
 
 interface Project {
   id: string;
@@ -32,8 +34,7 @@ interface ProjectDetailClientProps {
 }
 
 export default function ProjectDetailClient({ project, meetings }: ProjectDetailClientProps) {
-  const [activeTab, setActiveTab] = useState("Meetings");
-  const [message, setMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("Chat");
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Not set";
@@ -76,6 +77,8 @@ export default function ProjectDetailClient({ project, meetings }: ProjectDetail
   };
 
   const tabs = [
+    "Insights",
+    "Chat",
     "Meetings",
     "Files",
     "Expenses",
@@ -234,6 +237,14 @@ export default function ProjectDetailClient({ project, meetings }: ProjectDetail
       </div>
 
       {/* Tab Content */}
+      {activeTab === "Insights" && (
+        <ProjectInsights projectId={parseInt(project.id)} />
+      )}
+      
+      {activeTab === "Chat" && (
+        <ProjectChat projectId={project.id} projectTitle={project.title} />
+      )}
+      
       {activeTab === "Meetings" && (
         <div className="overflow-x-auto bg-white shadow rounded-lg">
           <table className="min-w-full table-auto">
@@ -275,7 +286,7 @@ export default function ProjectDetailClient({ project, meetings }: ProjectDetail
         </div>
       )}
 
-      {activeTab !== "Meetings" && (
+      {activeTab !== "Meetings" && activeTab !== "Chat" && activeTab !== "Insights" && (
         <div className="bg-white shadow rounded-lg p-12">
           <p className="text-center text-gray-500">
             {activeTab} data will be displayed here
@@ -283,45 +294,6 @@ export default function ProjectDetailClient({ project, meetings }: ProjectDetail
         </div>
       )}
 
-      {/* Chat Bar */}
-      <div className="mt-8 bg-white shadow rounded-lg p-4 flex items-center space-x-3">
-        <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-        <input
-          type="text"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          placeholder="Ask about this project..."
-          onKeyPress={(e) => {
-            if (e.key === "Enter" && message.trim()) {
-              console.log("Send message:", message);
-              setMessage("");
-            }
-          }}
-        />
-        <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          </svg>
-        </button>
-        <button 
-          onClick={() => {
-            if (message.trim()) {
-              console.log("Send message:", message);
-              setMessage("");
-            }
-          }}
-          className="p-2 rounded-full bg-orange-600 text-white hover:bg-orange-700 transition-colors"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

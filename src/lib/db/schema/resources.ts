@@ -64,3 +64,32 @@ export const insertSuggestionSchema = createSelectSchema(suggestions)
 // Type for suggestions
 export type Suggestion = typeof suggestions.$inferSelect;
 export type NewSuggestionParams = z.infer<typeof insertSuggestionSchema>;
+
+// Votes table for user feedback
+export const votes = pgTable("votes", {
+  id: varchar("id", { length: 191 })
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  messageId: varchar("message_id", { length: 191 }).notNull(),
+  isUpvote: varchar("is_upvote", { length: 10 }).notNull(),
+  
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .default(sql`now()`),
+});
+
+// Schema for votes
+export const insertVoteSchema = createSelectSchema(votes)
+  .extend({})
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+// Type for votes
+export type Vote = typeof votes.$inferSelect;
+export type NewVoteParams = z.infer<typeof insertVoteSchema>;

@@ -12,3 +12,11 @@ export function generateUUID(): string {
     return v.toString(16);
   });
 }
+
+export async function fetcher(url: string) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('Failed to fetch');
+  }
+  return response.json();
+}
