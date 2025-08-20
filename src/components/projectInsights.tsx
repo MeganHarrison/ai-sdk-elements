@@ -3,7 +3,12 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { AIInsight } from "@/types";
+import type { Database } from "../../database.types";
+
+// Define AIInsight type from database schema
+type AIInsight = Database["public"]["Tables"]["ai_insights"]["Row"] & {
+  project_name?: string; // Added for joined data from view
+};
 
 export default function ProjectInsights() {
   const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -11,18 +16,24 @@ export default function ProjectInsights() {
 
   useEffect(() => {
     const fetchInsights = async () => {
-      const supabase = createClient();
-
-      const { data, error } = await supabase
-        .from("ai_insights_with_project")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (error) {
+      try {
+        // Use the API endpoint we created
+        const response = await fetch('/api/insights?limit=10');
+        if (!response.ok) {
+          throw new Error('Failed to fetch insights');
+        }
+        
+        const data = await response.json();
+        // Map the response to include project_name from nested projects object
+        const mappedInsights = (data.insights || []).map((insight: any) => ({
+          ...insight,
+          project_name: insight.projects?.name
+        }));
+        
+        setInsights(mappedInsights);
+      } catch (error) {
         console.error("Error fetching insights:", error);
-      } else {
-        setInsights(data || []);
+      } finally {
         setLoading(false);
       }
     };

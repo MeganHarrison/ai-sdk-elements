@@ -3,8 +3,13 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Meeting } from "@/types";
 import { format } from "date-fns";
+import type { Database } from "../../database.types";
+
+// Define Meeting type from database schema
+type Meeting = Database['public']['Tables']['meetings']['Row'] & {
+  project_name?: string; // Added for joined data
+};
 
 export default function ProjectMeetings() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -15,17 +20,28 @@ export default function ProjectMeetings() {
       const supabase = createClient();
 
       const { data, error } = await supabase
-        .from("meetings_with_project")
-        .select("*")
+        .from("meetings")
+        .select(`
+          *,
+          projects:project_id(
+            id,
+            name
+          )
+        `)
         .order("date", { ascending: false })
         .limit(10);
 
       if (error) {
         console.error("Error fetching meetings:", error);
       } else {
-        setMeetings(data || []);
-        setLoading(false);
+        // Map the data to include project_name
+        const mappedMeetings = (data || []).map(meeting => ({
+          ...meeting,
+          project_name: meeting.projects?.name
+        }));
+        setMeetings(mappedMeetings);
       }
+      setLoading(false);
     };
 
     fetchMeetings();
