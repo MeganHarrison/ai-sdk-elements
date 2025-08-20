@@ -35,7 +35,7 @@ export default function ProjectMeetings() {
         console.error("Error fetching meetings:", error);
       } else {
         // Map the data to include project_name
-        const mappedMeetings = (data || []).map(meeting => ({
+        const mappedMeetings = (data || []).map((meeting: any) => ({
           ...meeting,
           project_name: meeting.projects?.name
         }));

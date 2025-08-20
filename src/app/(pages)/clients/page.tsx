@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -87,7 +87,7 @@ export default function ClientsPage() {
   })
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const supabase = createBrowserClient()
+  const supabase = createClient()
 
   // Fetch clients from Supabase
   const fetchClients = async () => {

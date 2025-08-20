@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { Database } from "../../database.types";
 
 // Define AIInsight type from database schema
