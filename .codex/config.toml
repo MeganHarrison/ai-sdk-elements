@@ -2,6 +2,8 @@
 name = "AI Agent Hub"
 context_files = ["agents.md"]
 
+approval = "never"
+
 [openai]
 model = "gpt-5"
 temperature = 0.3

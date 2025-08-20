@@ -104,6 +104,7 @@ import {
 } from "@/components/ui/tabs"
 import { ProjectChat } from "@/components/chat/project-chat"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { InsightsTable } from "@/components/insights-table"
 
 export interface Project {
   id: string | number
@@ -306,12 +307,14 @@ function ProjectDetailViewer({ project }: { project: Project }) {
           <TabsContent value="insights" className="flex-1">
             <ScrollArea className="h-[calc(100vh-200px)] px-4">
               <div className="space-y-4 pb-6">
-                <div className="rounded-lg border p-4">
-                  <h4 className="font-medium mb-2">Project Health</h4>
-                  <p className="text-sm text-muted-foreground">
-                    AI-generated insights will appear here based on meeting transcripts and project data.
-                  </p>
-                </div>
+                <InsightsTable 
+                  projectId={typeof project.id === 'number' ? project.id : parseInt(project.id as string)}
+                  showProjectColumn={false}
+                  onInsightClick={(insight) => {
+                    console.log('Insight clicked:', insight);
+                    // Could open a modal or detailed view here
+                  }}
+                />
                 <div className="rounded-lg border p-4">
                   <h4 className="font-medium mb-2">Recent Activity</h4>
                   <p className="text-sm text-muted-foreground">

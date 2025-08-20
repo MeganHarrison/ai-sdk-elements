@@ -1,0 +1,27 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚨 RUNNING MANDATORY PLAYWRIGHT TESTS..."
+echo "════════════════════════════════════════"
+
+# Run lint and typecheck
+npm run lint
+npm run typecheck
+
+# Run Playwright tests
+npm run test:enforce
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ COMMIT BLOCKED: Playwright tests failed!"
+  echo "❌ You MUST fix all tests before committing."
+  echo ""
+  echo "Run these commands to debug:"
+  echo "  npm run test:headed    # See tests in browser"
+  echo "  npm run test:debug     # Debug mode"
+  echo "  npm run test:report    # View test report"
+  echo ""
+  exit 1
+fi
+
+echo "✅ All tests passed! Proceeding with commit..."

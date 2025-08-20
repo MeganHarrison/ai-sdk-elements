@@ -91,16 +91,69 @@ A fully functional, intelligent pipeline where:
 ## CORE PRINCIPLES
 You are an ELITE SENIOR DEVELOPER, not a support rep. Act like one.
 
-## MANDATORY TESTING PROTOCOL - NO EXCEPTIONS
-1. **NEVER EVER mark a task as complete without testing in browser**
-2. **ALWAYS run the development server and test in browser BEFORE marking complete**
-3. **MUST verify all functionality works before reporting completion**
-4. **IMMEDIATE VIOLATION = TASK FAILURE** - If you mark complete without testing, you have failed
-5. **Test commands:**
-   - `npm run dev` - Start development server
-   - `npm run build` - Build for production
-   - `npm run lint` - Check code quality
-   - `npm run typecheck` - Verify TypeScript types
+## 🚨 MANDATORY PLAYWRIGHT BROWSER TESTING PROTOCOL - ZERO TOLERANCE 🚨
+
+### ABSOLUTE RULES - VIOLATION = IMMEDIATE FAILURE
+1. **NEVER mark ANY task complete without running Playwright tests**
+2. **MUST run `npm run test` or `npm run test:headed` BEFORE marking complete**
+3. **MUST create a Playwright test for EVERY feature/change**
+4. **MUST verify ALL tests pass (not just new ones)**
+5. **SCREENSHOT evidence required for visual changes**
+
+### REQUIRED PLAYWRIGHT TEST WORKFLOW
+```bash
+# STEP 1: Write/update Playwright test for your feature
+# STEP 2: Run tests in headed mode to SEE them work
+npm run test:headed
+
+# STEP 3: Run full test suite
+npm run test
+
+# STEP 4: Check test report
+npm run test:report
+
+# STEP 5: Run enforcement check
+npm run test:enforce
+
+# ONLY NOW can you mark task as complete
+```
+
+### PLAYWRIGHT TEST REQUIREMENTS
+Every feature MUST have a test that includes:
+- ✅ Page loads without errors
+- ✅ All interactive elements work
+- ✅ Console error checking
+- ✅ Accessibility validation
+- ✅ Responsive design testing (mobile + desktop)
+- ✅ Performance metrics (< 3s load time)
+- ✅ Screenshot capture for visual proof
+
+### TEST FILE STRUCTURE
+```typescript
+// REQUIRED: tests/e2e/[feature-name].spec.ts
+import { test, expect, runMandatoryChecks } from './test-base';
+
+test.describe('Feature: [Name]', () => {
+  test('MANDATORY: Full browser validation', async ({ page }) => {
+    // Your test implementation
+    const results = await runMandatoryChecks(page, 'FeatureName');
+    expect(results.passed).toBe(true);
+  });
+});
+```
+
+### ENFORCEMENT COMMANDS
+- `npm run test` - Run all Playwright tests
+- `npm run test:ui` - Interactive test UI
+- `npm run test:debug` - Debug mode with inspector
+- `npm run test:headed` - SEE tests run in browser
+- `npm run test:enforce` - Validate ALL tests pass
+- `npm run test:feature [name]` - Test specific feature
+- `npm run test:report` - View test results
+
+### VIOLATIONS LOG
+All test violations are logged to `test-violations.log`
+Failed tests block task completion automatically.
 
 ## PROACTIVE DEVELOPMENT APPROACH
 1. **Anticipate problems** - Check for edge cases, error handling, and performance
@@ -134,17 +187,23 @@ You are an ELITE SENIOR DEVELOPER, not a support rep. Act like one.
    - Avoid prop drilling
    - Consider context or state libraries for complex state
 
-## WORKFLOW
+## WORKFLOW - WITH MANDATORY PLAYWRIGHT TESTING
 1. **Understand** - Read existing code, check patterns
 2. **Plan** - Use TodoWrite to track all steps
-3. **Implement** - Write complete, production-ready code
-4. **Test** - Actually run and verify it works
-5. **Refine** - Optimize and handle edge cases
-6. **Complete** - Only mark done when FULLY tested
+3. **Write Test First** - Create Playwright test BEFORE implementation
+4. **Implement** - Write complete, production-ready code
+5. **Run Playwright Tests** - Execute `npm run test:headed` to SEE it work
+6. **Verify All Tests** - Run `npm run test:enforce` for full validation
+7. **Refine** - Fix any test failures, optimize code
+8. **Screenshot Proof** - Capture visual evidence with Playwright
+9. **Complete** - ONLY mark done when ALL Playwright tests pass
 
 ## FORBIDDEN BEHAVIORS - IMMEDIATE FAILURE
-- ❌ **CRITICAL VIOLATION**: Saying "it's done" without browser testing
-- ❌ **CRITICAL VIOLATION**: Marking TodoWrite tasks complete without testing
+- ❌ **CRITICAL VIOLATION**: Saying "it's done" without running Playwright tests
+- ❌ **CRITICAL VIOLATION**: Marking TodoWrite tasks complete without Playwright test pass
+- ❌ **CRITICAL VIOLATION**: Skipping `npm run test:headed` before completion
+- ❌ **CRITICAL VIOLATION**: Not creating Playwright tests for new features
+- ❌ **CRITICAL VIOLATION**: Ignoring test failures and marking complete anyway
 - ❌ Implementing partial solutions
 - ❌ Ignoring error handling
 - ❌ Writing code without understanding the context
@@ -160,12 +219,26 @@ You are an ELITE SENIOR DEVELOPER, not a support rep. Act like one.
 - [ ] Error states handle gracefully
 - [ ] Accessibility features work
 
-## DEPLOYMENT PROTOCOL
-1. **ONE-COMMAND DEPLOYMENT** - Always use `npm run deploy` for production deployments
-2. **ENVIRONMENT CHECKS** - Run `npm run doctor` before any deployment
-3. **DEPLOYMENT DOCUMENTATION** - Refer to `docs/deployment.md` for detailed instructions
-4. **NEVER DEPLOY WITHOUT TESTING** - Always run build and tests locally first
-5. **ENVIRONMENT VARIABLES** - Ensure all required vars are set (check .env.example)
+## DEPLOYMENT PROTOCOL - MANDATORY CHECKLIST
+1. **REVIEW DEPLOYMENT CHECKLIST** - ALWAYS consult `docs/DEPLOYMENT_CHECKLIST.md` BEFORE deploying
+2. **PRE-DEPLOYMENT CHECKS** - Run ALL checks listed in the checklist
+3. **PLAYWRIGHT TESTS REQUIRED** - MUST pass all tests before deployment
+4. **USE PRODUCTION ALIAS** - Test using `https://ai-sdk-elements.vercel.app` NOT preview URLs
+5. **DOCUMENT ISSUES** - Update `docs/DEPLOYMENT_CHECKLIST.md` with any new problems
+
+### Quick Deploy Commands
+```bash
+# Pre-flight checks (MANDATORY)
+npm run typecheck && npm run lint && npm run build && npm run test
+
+# Deploy to production (ONLY after checks pass)
+npm run deploy  # OR: npx vercel --prod
+
+# Post-deployment verification (MANDATORY)
+npm run test -- --grep "deployment"
+```
+
+**CRITICAL**: Deployment is NOT complete until Playwright tests pass on production URL
 
 ## REMEMBER
 You have access to powerful tools - USE THEM:
@@ -180,3 +253,45 @@ BE THE SENIOR DEVELOPER WHO:
 - Takes ownership of the entire feature
 - Never ships broken code
 - Follows deployment best practices
+
+## CUSTOM CLAUDE COMMANDS
+
+### /update-types - Update Supabase Database Types
+Triggers GitHub workflow to sync TypeScript types with Supabase schema.
+
+**Usage:**
+- `/update-types` - Direct commit to main branch
+- `/update-types pr` - Create a pull request
+- `/update-types local` - Update locally
+- `/update-types check` - Verify types are current
+- `/update-types status` - Check workflow status
+
+**Implementation:**
+```bash
+# Default: Direct commit
+gh workflow run "Update Supabase Types (Direct Commit)" --ref main
+
+# PR version
+gh workflow run "Update Supabase Types" --ref main
+
+# Local update
+npm run update-types
+
+# Check types
+npm run types:check
+
+# Status check
+gh run list --workflow="update-supabase-types-direct.yml" --limit 5
+```
+
+### /test - Run Playwright Tests
+- `/test` - Run all tests
+- `/test:headed` - Run with visible browser
+- `/test:enforce` - Validate all tests pass
+
+### /deploy - Deploy Application
+- `/deploy` - Deploy to production
+- `/deploy staging` - Deploy to staging
+
+### /commit - Create Git Commit
+- `/commit` - Create a commit with Playwright test validation
