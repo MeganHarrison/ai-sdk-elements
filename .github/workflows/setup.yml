@@ -44,7 +44,7 @@ jobs:
         if: ${{ github.event.inputs.install_deps == 'true' }}
         run: |
           echo "📦 Installing dependencies..."
-          npm ci
+          npm ci --legacy-peer-deps
           echo "✅ Dependencies installed"
       
       - name: Setup Husky hooks
